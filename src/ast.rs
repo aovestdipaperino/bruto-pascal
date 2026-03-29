@@ -45,6 +45,8 @@ pub enum PascalType {
 pub struct Block {
     pub statements: Vec<Statement>,
     pub span: Span,
+    /// Span of the closing `end` keyword (for breakpoint support).
+    pub end_span: Span,
 }
 
 #[derive(Debug, Clone)]

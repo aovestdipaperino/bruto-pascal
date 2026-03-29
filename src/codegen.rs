@@ -167,8 +167,8 @@ impl<'ctx> CodeGen<'ctx> {
         // Compile body
         self.compile_block(&program.body)?;
 
-        // Return 0
-        self.set_debug_loc(program.body.span);
+        // Return 0 — use the end_span so `end.` is breakpointable
+        self.set_debug_loc(program.body.end_span);
         self.builder.build_return(Some(&self.context.i64_type().const_int(0, false)))
             .map_err(|e| CodeGenError::new(e.to_string(), None))?;
 
@@ -440,6 +440,12 @@ impl<'ctx> CodeGen<'ctx> {
         for stmt in &block.statements {
             self.compile_statement(stmt)?;
         }
+        // Emit a debug location on the `end` keyword so breakpoints can be
+        // set there. We use a trivial load of 0 that the optimizer can remove
+        // but that gives lldb a line to stop on.
+        self.set_debug_loc(block.end_span);
+        let _ = self.builder.build_alloca(self.context.i64_type(), "_end_bp")
+            .map_err(|e| CodeGenError::new(e.to_string(), Some(block.end_span)))?;
         Ok(())
     }
 

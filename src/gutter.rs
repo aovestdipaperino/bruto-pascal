@@ -1,28 +1,23 @@
-/// Breakpoint gutter — a narrow View placed to the left of the editor.
+/// Breakpoint gutter — a single-column View to the left of the editor.
 ///
-/// Displays breakpoint markers (red squares) and the current execution line indicator.
-/// Mouse clicks on the gutter toggle breakpoints.
+/// Displays breakpoint markers (red ■) and the current execution line (►).
+/// Mouse clicks toggle breakpoints. Does not paint its own background —
+/// the editor's window frame fills that area.
 
 use std::collections::HashSet;
-use turbo_vision::core::draw::DrawBuffer;
+use turbo_vision::core::draw::Cell;
 use turbo_vision::core::event::{Event, EventType, MB_LEFT_BUTTON};
 use turbo_vision::core::geometry::Rect;
 use turbo_vision::core::palette::{Attr, TvColor};
 use turbo_vision::core::state::StateFlags;
 use turbo_vision::terminal::Terminal;
-use turbo_vision::views::view::{write_line_to_terminal, OwnerType, View};
+use turbo_vision::views::view::{OwnerType, View};
 
 /// Width of the gutter in characters.
-pub const GUTTER_WIDTH: i16 = 3;
+pub const GUTTER_WIDTH: i16 = 1;
 
-/// Color for breakpoint markers (red on dark background).
 const BP_ATTR: Attr = Attr::new(TvColor::LightRed, TvColor::Red);
-
-/// Color for current execution line indicator.
 const EXEC_ATTR: Attr = Attr::new(TvColor::Yellow, TvColor::Blue);
-
-/// Default gutter background.
-const GUTTER_BG: Attr = Attr::new(TvColor::DarkGray, TvColor::Cyan);
 
 pub struct BreakpointGutter {
     bounds: Rect,
@@ -77,48 +72,31 @@ impl BreakpointGutter {
 }
 
 impl View for BreakpointGutter {
-    fn bounds(&self) -> Rect {
-        self.bounds
-    }
-
-    fn set_bounds(&mut self, bounds: Rect) {
-        self.bounds = bounds;
-    }
+    fn bounds(&self) -> Rect { self.bounds }
+    fn set_bounds(&mut self, bounds: Rect) { self.bounds = bounds; }
 
     fn draw(&mut self, terminal: &mut Terminal) {
         let height = self.bounds.height_clamped() as usize;
-        let width = self.bounds.width_clamped() as usize;
+        let x = self.bounds.a.x as u16;
 
         for row in 0..height {
-            let line_num = self.top_line + row + 1; // 1-based line numbers
-            let mut buf = DrawBuffer::new(width);
-
-            // Fill background
-            buf.move_char(0, ' ', GUTTER_BG, width);
+            let line_num = self.top_line + row + 1;
+            let y = (self.bounds.a.y + row as i16) as u16;
 
             if self.breakpoints.contains(&line_num) {
-                // Red square for breakpoint — use block character
-                buf.put_char(1, '\u{25A0}', BP_ATTR); // ■
+                terminal.write_cell(x, y, Cell::new('\u{25A0}', BP_ATTR));
             } else if self.current_exec_line == Some(line_num) {
-                // Execution indicator
-                buf.put_char(1, '\u{25BA}', EXEC_ATTR); // ►
+                terminal.write_cell(x, y, Cell::new('\u{25BA}', EXEC_ATTR));
             }
-
-            write_line_to_terminal(
-                terminal,
-                self.bounds.a.x,
-                self.bounds.a.y + row as i16,
-                &buf,
-            );
+            // No else — don't paint empty cells, let the background show through
         }
     }
 
     fn handle_event(&mut self, event: &mut Event) {
         if event.what == EventType::MouseDown && (event.mouse.buttons & MB_LEFT_BUTTON != 0) {
-            let mouse_y = event.mouse.pos.y;
             let mouse_x = event.mouse.pos.x;
+            let mouse_y = event.mouse.pos.y;
 
-            // Check if click is within our bounds
             if mouse_x >= self.bounds.a.x
                 && mouse_x < self.bounds.b.x
                 && mouse_y >= self.bounds.a.y
@@ -132,23 +110,9 @@ impl View for BreakpointGutter {
         }
     }
 
-    fn state(&self) -> StateFlags {
-        self.state
-    }
-
-    fn set_state(&mut self, state: StateFlags) {
-        self.state = state;
-    }
-
-    fn get_palette(&self) -> Option<turbo_vision::core::palette::Palette> {
-        None
-    }
-
-    fn get_owner_type(&self) -> OwnerType {
-        self.owner_type
-    }
-
-    fn set_owner_type(&mut self, owner_type: OwnerType) {
-        self.owner_type = owner_type;
-    }
+    fn state(&self) -> StateFlags { self.state }
+    fn set_state(&mut self, state: StateFlags) { self.state = state; }
+    fn get_palette(&self) -> Option<turbo_vision::core::palette::Palette> { None }
+    fn get_owner_type(&self) -> OwnerType { self.owner_type }
+    fn set_owner_type(&mut self, owner_type: OwnerType) { self.owner_type = owner_type; }
 }

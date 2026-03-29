@@ -35,7 +35,6 @@ use turbo_vision::core::palette::{Attr, TvColor};
 use turbo_vision::views::menu_bar::{MenuBar, SubMenu};
 use turbo_vision::views::status_line::{StatusItem, StatusLine};
 use turbo_vision::views::terminal_widget::TerminalWidget;
-use turbo_vision::views::window::Window;
 use turbo_vision::views::View;
 
 /// Central IDE state, kept outside the view hierarchy.
@@ -74,8 +73,9 @@ fn main() -> turbo_vision::core::error::Result<()> {
     app.set_status_line(status_line);
 
     // ── Layout ───────────────────────────────────────────
-    //  Desktop area: row 1 .. h-2 (menu=row 0, status=row h-1)
-    let desktop_top = 1;
+    //  Menu is row 0, status line is row h-1.
+    //  Windows start at row 0 — menu/status draw on top.
+    let desktop_top = 0;
     let desktop_bottom = h - 1;
     let desktop_h = desktop_bottom - desktop_top;
 
@@ -94,30 +94,41 @@ fn main() -> turbo_vision::core::error::Result<()> {
     let gutter_rc = ide_win.gutter_rc();
     app.desktop.add(Box::new(ide_win));
 
-    // ── Watch window (separate window, right side) ───────
-    let watch_bounds = Rect::new(editor_right, desktop_top, w, editor_bottom);
+    // ── Watch dialog (right side) ──────────────────────────
+    // Use y=-1 to compensate for constrain_to_limits shifting dialogs
+    // to limits.a.y (which is 1 because the desktop starts below the menu bar).
+    let watch_bounds = Rect::new(editor_right, desktop_top - 1, w, editor_bottom - 1);
+    let watch_interior_w = watch_bounds.width() - 2;
+    let watch_interior_h = watch_bounds.height() - 2;
     let watch = Rc::new(RefCell::new(WatchPanel::new(
-        // Interior-relative bounds: (0,0) to (interior_w, interior_h)
-        Rect::new(0, 0, watch_width - 2, editor_bottom - desktop_top - 2),
+        Rect::new(0, 0, watch_interior_w, watch_interior_h),
     )));
-    let mut watch_win = Window::new(watch_bounds, "Watches");
-    watch_win.add(Box::new(WatchView(Rc::clone(&watch))));
-    app.desktop.add(Box::new(watch_win));
+    let mut watch_dlg = turbo_vision::views::dialog::Dialog::new(watch_bounds, "Watches");
+    watch_dlg.add(Box::new(WatchView(Rc::clone(&watch))));
+    {
+        use turbo_vision::core::state::SF_SHADOW;
+        let state = watch_dlg.state();
+        watch_dlg.set_state(state & !SF_SHADOW);
+    }
+    app.desktop.add(Box::new(watch_dlg));
 
     // ── Output (modeless Dialog with TerminalWidget, black background) ──
-    let output_bounds = Rect::new(0, editor_bottom, w, desktop_bottom);
+    let output_bounds = Rect::new(0, editor_bottom - 1, w, desktop_bottom - 1);
     let output_panel = OutputPanel::new(output_bounds, "Output");
     let output_term = output_panel.terminal_rc();
-    output_term.borrow_mut().append_line("Bruto Pascal IDE ready. Press F9 to build.".into());
+    output_term.borrow_mut().append_line_colored("Bruto Pascal IDE ready. Press F9 to build.".into(), Attr::new(TvColor::LightGray, TvColor::Black));
     app.desktop.add(Box::new(output_panel));
 
     // ── IDE state ────────────────────────────────────────
     let mut ide = IdeState::new();
 
+
     // ── Event loop ───────────────────────────────────────
     app.running = true;
     while app.running {
-        // Draw
+        // Force full redraw so the TerminalWidget's black empty rows
+        // aren't skipped by the diff-based flush.
+        app.terminal.force_full_redraw();
         app.desktop.draw(&mut app.terminal);
         if let Some(ref mut mb) = app.menu_bar {
             mb.draw(&mut app.terminal);
@@ -166,6 +177,7 @@ fn main() -> turbo_vision::core::error::Result<()> {
                     DebugEvent::Exited { code } => {
                         ide.exec_line = None;
                         ide.watch_vars.clear();
+                        ide.debugger.stop();
                         let color = if code == 0 {
                             Attr::new(TvColor::LightGreen, TvColor::Black)
                         } else {
@@ -233,20 +245,26 @@ fn main() -> turbo_vision::core::error::Result<()> {
                     }
                 }
 
-                // Desktop handles mouse/keyboard
-                app.desktop.handle_event(&mut event);
-
-                // Handle commands from menus/status bar
+                // Handle app-level commands BEFORE desktop.
+                // Pass the Rc, not a borrow — some commands (About dialog)
+                // run a modal event loop that redraws the desktop, which would
+                // double-borrow the terminal widget if we held a borrow here.
                 if event.what == EventType::Command {
-                    handle_command(
+                    let handled = handle_command(
                         event.command,
                         &mut app,
                         &editor_rc,
                         &gutter_rc,
-                        &mut output_term.borrow_mut(),
+                        &output_term,
                         &mut ide,
                     );
+                    if handled {
+                        event.clear();
+                    }
                 }
+
+                // Desktop handles remaining mouse/keyboard/command events
+                app.desktop.handle_event(&mut event);
             }
             Ok(None) => {}
             Err(_) => {}
@@ -263,50 +281,59 @@ fn handle_command(
     app: &mut Application,
     editor_rc: &Rc<RefCell<turbo_vision::views::editor::Editor>>,
     gutter: &Rc<RefCell<BreakpointGutter>>,
-    output: &mut TerminalWidget,
+    output_rc: &Rc<RefCell<TerminalWidget>>,
     ide: &mut IdeState,
-) {
+) -> bool {
     match cmd {
         CM_QUIT => {
             ide.debugger.stop();
             app.running = false;
+            true
         }
         CM_BUILD => {
-            handle_build(editor_rc, output, ide);
+            handle_build(editor_rc, &mut output_rc.borrow_mut(), ide);
+            true
         }
         CM_RUN => {
-            handle_build(editor_rc, output, ide);
+            handle_build(editor_rc, &mut output_rc.borrow_mut(), ide);
             if let Some(ref exe) = ide.exe_path.clone() {
-                handle_run(exe, output);
+                handle_run(exe, &mut output_rc.borrow_mut());
             }
+            true
         }
         CM_DEBUG_START | CM_DEBUG_CONTINUE => {
-            handle_debug_start_continue(editor_rc, gutter, output, ide);
+            handle_debug_start_continue(editor_rc, gutter, &mut output_rc.borrow_mut(), ide);
+            true
         }
         CM_DEBUG_STOP => {
             ide.debugger.stop();
             ide.exec_line = None;
             ide.watch_vars.clear();
             append_output_line(
-                output,
+                &mut output_rc.borrow_mut(),
                 "Debugger stopped.",
                 Some(Attr::new(TvColor::Yellow, TvColor::Black)),
             );
+            true
         }
         CM_DEBUG_STEP_OVER => {
             if ide.debugger.is_running() {
                 let _ = ide.debugger.step_over();
             }
+            true
         }
         CM_DEBUG_STEP_INTO => {
             if ide.debugger.is_running() {
                 let _ = ide.debugger.step_into();
             }
+            true
         }
         CM_ABOUT => {
+            // No output_rc borrow held here — the modal dialog can safely redraw
             show_about_dialog(app);
+            true
         }
-        _ => {}
+        _ => false,
     }
 }
 
@@ -314,19 +341,7 @@ fn show_about_dialog(app: &mut Application) {
     use turbo_vision::views::msgbox::message_box_ok;
     message_box_ok(
         app,
-        concat!(
-            "\x03",  // center text
-            "Bruto Pascal IDE\n",
-            "\n",
-            "Version 0.1.0\n",
-            "\n",
-            "A Mini-Pascal IDE with\n",
-            "LLVM backend and lldb debugger\n",
-            "\n",
-            "Built with Turbo Vision for Rust\n",
-            "\n",
-            "(c) 2026 Enzo Lombardi",
-        ),
+        "Bruto Pascal IDE\n\nVersion 0.1.0\n\nA Mini-Pascal IDE with\nLLVM backend and lldb debugger\n\nBuilt with Turbo Vision for Rust\n\n(c) 2026 Enzo Lombardi",
     );
 }
 
@@ -426,7 +441,7 @@ fn handle_run(exe_path: &str, output: &mut TerminalWidget) {
     // Read captured output
     if let Ok(contents) = std::fs::read_to_string("/tmp/turbo_pascal_console.txt") {
         for line in contents.lines() {
-            output.append_line(line.to_string());
+            output.append_line_colored(line.to_string(), OUTPUT_TEXT);
         }
     }
 
@@ -508,12 +523,12 @@ fn handle_debug_start_continue(
 const CONSOLE_ERR: Attr = Attr::new(TvColor::LightRed, TvColor::Black);
 const CONSOLE_INFO: Attr = Attr::new(TvColor::Yellow, TvColor::Black);
 
+const OUTPUT_TEXT: Attr = Attr::new(TvColor::LightGray, TvColor::Black);
+
 fn append_output_line(panel: &mut TerminalWidget, text: &str, attr: Option<Attr>) {
-    if let Some(attr) = attr {
-        panel.append_line_colored(text.to_string(), attr);
-    } else {
-        panel.append_line(text.to_string());
-    }
+    // Always use an explicit attr so TerminalWidget never falls back to
+    // its default_color (which might not match after palette remapping).
+    panel.append_line_colored(text.to_string(), attr.unwrap_or(OUTPUT_TEXT));
 }
 
 // ── View wrappers for Rc<RefCell<...>> inside Windows ────
@@ -558,10 +573,10 @@ fn build_menu_bar(width: i16) -> MenuBar {
     ]);
 
     let mut menu_bar = MenuBar::new(Rect::new(0, 0, width, 1));
-    menu_bar.add_submenu(SubMenu::new("\u{F0} ", about_menu)); // ≡ system menu
     menu_bar.add_submenu(SubMenu::new("~F~ile", file_menu));
     menu_bar.add_submenu(SubMenu::new("~B~uild", build_menu));
     menu_bar.add_submenu(SubMenu::new("~D~ebug", debug_menu));
+    menu_bar.add_submenu(SubMenu::new("~H~elp", about_menu));
     menu_bar
 }
 

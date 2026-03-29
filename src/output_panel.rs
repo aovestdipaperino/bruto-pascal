@@ -39,6 +39,11 @@ pub struct OutputPanel {
 impl OutputPanel {
     pub fn new(bounds: Rect, title: &str) -> Self {
         let mut dialog = Dialog::new(bounds, title);
+        // Remove shadow — the output panel sits at the bottom of the screen
+        // and the shadow causes constrain_to_limits to shift it up.
+        use turbo_vision::core::state::SF_SHADOW;
+        let state = dialog.state();
+        dialog.set_state(state & !SF_SHADOW);
 
         let interior_w = bounds.width() - 2;
         let interior_h = bounds.height() - 2;

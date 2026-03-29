@@ -470,8 +470,9 @@ impl Parser {
                 statements.push(self.parse_statement()?);
             }
         }
+        let end_span = self.span();
         self.expect(&Tok::End)?;
-        Ok(Block { statements, span })
+        Ok(Block { statements, span, end_span })
     }
 
     // ── statement ────────────────────────────────────────
@@ -508,14 +509,14 @@ impl Parser {
         let then_stmt = self.parse_statement()?;
         let then_branch = match then_stmt {
             Statement::Block(b) => b,
-            other => Block { span: other.span(), statements: vec![other] },
+            other => { let s = other.span(); Block { span: s, end_span: s, statements: vec![other] } },
         };
         let else_branch = if *self.peek() == Tok::Else {
             self.advance();
             let else_stmt = self.parse_statement()?;
             let block = match else_stmt {
                 Statement::Block(b) => b,
-                other => Block { span: other.span(), statements: vec![other] },
+                other => { let s = other.span(); Block { span: s, end_span: s, statements: vec![other] } },
             };
             Some(block)
         } else {
@@ -532,7 +533,7 @@ impl Parser {
         let body_stmt = self.parse_statement()?;
         let body = match body_stmt {
             Statement::Block(b) => b,
-            other => Block { span: other.span(), statements: vec![other] },
+            other => { let s = other.span(); Block { span: s, end_span: s, statements: vec![other] } },
         };
         Ok(Statement::While { condition, body, span })
     }

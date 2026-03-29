@@ -883,7 +883,7 @@ dependencies = [
 [[package]]
 name = "turbo-vision"
 version = "1.0.2"
-source = "git+https://github.com/aovestdipaperino/turbo-vision-4-rust.git#e2fbc7bdcd89fcc88b8bbd7b0e9707cd366ec520"
+source = "git+https://github.com/aovestdipaperino/turbo-vision-4-rust.git#e10d9363ff0db1032fa533b617c98a712d9b380e"
 dependencies = [
  "arboard",
  "base64",

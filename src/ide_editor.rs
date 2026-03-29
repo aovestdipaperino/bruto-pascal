@@ -155,6 +155,9 @@ impl IdeEditorWindow {
         };
 
         ide_win.window.set_focus(true);
+        // Disable shadow — IDE windows are tiled, shadows waste space
+        let state = ide_win.window.state();
+        ide_win.window.set_state(state & !turbo_vision::core::state::SF_SHADOW);
         ide_win
     }
 
