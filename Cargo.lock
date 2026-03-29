@@ -62,9 +62,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "843867be96c8daad0d758b57df9392b6d8d271134fce549de6ce169ff98a92af"
 
 [[package]]
+name = "bruto-ide"
+version = "0.1.0"
+source = "git+https://github.com/aovestdipaperino/bruto-ide.git#a608836e05ddf2d66ecf0a1497f7871441df7699"
+dependencies = [
+ "turbo-vision",
+]
+
+[[package]]
 name = "bruto-pascal"
 version = "0.1.0"
 dependencies = [
+ "bruto-ide",
+ "bruto-pascal-lang",
+ "turbo-vision",
+]
+
+[[package]]
+name = "bruto-pascal-lang"
+version = "0.1.0"
+source = "git+https://github.com/aovestdipaperino/bruto-pascal-lang.git#b91c3d27efd3f0e16be6b93caa93edec16214d3e"
+dependencies = [
+ "bruto-ide",
  "inkwell",
  "turbo-vision",
 ]
