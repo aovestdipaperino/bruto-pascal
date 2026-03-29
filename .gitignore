@@ -1,3 +1,6 @@
 /target
 .tokensave/
 data/
+cache/
+generated-illustrations/
+local-only/
