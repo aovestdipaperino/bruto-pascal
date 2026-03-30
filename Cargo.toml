@@ -6,6 +6,12 @@ authors = ["Enzo Lombardi <enzinol@gmail.com>"]
 repository = "https://github.com/aovestdipaperino/bruto-pascal"
 
 [dependencies]
-bruto-ide = { git = "https://github.com/aovestdipaperino/bruto-ide.git" }
-bruto-pascal-lang = { git = "https://github.com/aovestdipaperino/bruto-pascal-lang.git" }
-turbo-vision = { git = "https://github.com/aovestdipaperino/turbo-vision-4-rust.git" }
+bruto-ide = { path = "bruto-ide" }
+bruto-pascal-lang = { path = "bruto-pascal-lang" }
+turbo-vision = { path = "turbo-vision-4-rust" }
+
+[patch."https://github.com/aovestdipaperino/turbo-vision-4-rust.git"]
+turbo-vision = { path = "turbo-vision-4-rust" }
+
+[patch."https://github.com/aovestdipaperino/bruto-ide.git"]
+bruto-ide = { path = "bruto-ide" }
