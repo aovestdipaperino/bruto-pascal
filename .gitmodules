@@ -7,3 +7,6 @@
 [submodule "bruto-pascal-lang"]
 	path = bruto-pascal-lang
 	url = https://github.com/aovestdipaperino/bruto-pascal-lang.git
+[submodule "bruto-lang"]
+	path = bruto-lang
+	url = https://github.com/aovestdipaperino/bruto-lang.git
