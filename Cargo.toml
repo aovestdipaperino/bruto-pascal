@@ -1,3 +1,6 @@
+[workspace]
+members = [".", "bruto-lang", "bruto-ide", "bruto-pascal-lang"]
+
 [package]
 name = "bruto-pascal"
 version = "0.1.0"
@@ -7,6 +10,7 @@ repository = "https://github.com/aovestdipaperino/bruto-pascal"
 
 [dependencies]
 bruto-ide = { path = "bruto-ide" }
+bruto-lang = { path = "bruto-lang" }
 bruto-pascal-lang = { path = "bruto-pascal-lang" }
 turbo-vision = { path = "turbo-vision-4-rust" }
 
@@ -15,3 +19,6 @@ turbo-vision = { path = "turbo-vision-4-rust" }
 
 [patch."https://github.com/aovestdipaperino/bruto-ide.git"]
 bruto-ide = { path = "bruto-ide" }
+
+[patch."https://github.com/aovestdipaperino/bruto-lang.git"]
+bruto-lang = { path = "bruto-lang" }
