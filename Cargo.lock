@@ -63,8 +63,8 @@ checksum = "843867be96c8daad0d758b57df9392b6d8d271134fce549de6ce169ff98a92af"
 
 [[package]]
 name = "bruto-ide"
-version = "0.1.0"
-source = "git+https://github.com/aovestdipaperino/bruto-ide.git#7b9cdc90b5b590224b325db1beabce1da18f8c67"
+version = "0.2.0"
+source = "git+https://github.com/aovestdipaperino/bruto-ide.git#58220bf36cd386b06a7d784c8d1ba3fe372a0c3d"
 dependencies = [
  "turbo-vision",
 ]
@@ -80,8 +80,8 @@ dependencies = [
 
 [[package]]
 name = "bruto-pascal-lang"
-version = "0.1.0"
-source = "git+https://github.com/aovestdipaperino/bruto-pascal-lang.git#9059b48d90d2199adc9aa853c9da3b016e3f29f9"
+version = "0.2.0"
+source = "git+https://github.com/aovestdipaperino/bruto-pascal-lang.git#b92a4569937721456e115f6469448fb71aa37c2f"
 dependencies = [
  "bruto-ide",
  "inkwell",
@@ -901,8 +901,8 @@ dependencies = [
 
 [[package]]
 name = "turbo-vision"
-version = "1.0.4"
-source = "git+https://github.com/aovestdipaperino/turbo-vision-4-rust.git#f18f9d55960830881644e0b80c58556be7bbe547"
+version = "1.0.7"
+source = "git+https://github.com/aovestdipaperino/turbo-vision-4-rust.git#53ada8d18b7203032b79eeea259e3acc08a3f90d"
 dependencies = [
  "arboard",
  "base64",
