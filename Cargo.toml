@@ -12,6 +12,7 @@ repository = "https://github.com/aovestdipaperino/bruto-pascal"
 bruto-ide = { path = "bruto-ide" }
 bruto-lang = { path = "bruto-lang" }
 bruto-pascal-lang = { path = "bruto-pascal-lang" }
+inkwell = { version = "0.8.0", features = ["llvm18-1"] }
 turbo-vision = { path = "turbo-vision-4-rust" }
 
 [patch."https://github.com/aovestdipaperino/turbo-vision-4-rust.git"]
