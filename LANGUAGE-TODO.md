@@ -8,41 +8,44 @@ Remaining features not yet implemented, compared to standard/Turbo Pascal.
 - **Declarations:** program, label, const, type, var, procedure, function, value/var parameters
 - **Statements:** assignment, if/then/else, while/do, for/to/downto, repeat/until, case/of, with, goto/label, begin/end blocks, procedure calls, writeln/write/readln, new/dispose
 - **Expressions:** arithmetic (+, -, *, div, /, mod), comparisons (=, <>, <, >, <=, >=), boolean (and, or, not), unary negation, in (set membership), function calls, array indexing (single & multi-dim), record field access, pointer dereference, set constructors
-- **Builtins:** length, ord, chr, string concat (+), string compare
+- **Builtins:** length, ord, chr, string concat (+), string compare, abs, sqr, sqrt, trunc, round, sin, cos, arctan, exp, ln, succ, pred, inc, dec, low, high, copy, concat, pos, delete, insert, str, val, upcase, include, exclude
+- **Assignments:** simple, pointer deref, array index, multi-dim index, field, chained LValues (`a[i].field := expr`)
+- **Forward declarations:** `procedure X; forward;` for mutual recursion
+- **Set comparisons:** `=`, `<>`, `<=` (subset), `>=` (superset)
 
 ---
 
 ## Standard Functions & Procedures
 
 ### P0 - Arithmetic / Conversion
-- [ ] `abs(x)` — absolute value (integer and real)
-- [ ] `sqr(x)` — square (x * x)
-- [ ] `sqrt(x)` — square root (returns real)
-- [ ] `trunc(x)` — truncate real to integer
-- [ ] `round(x)` — round real to integer
-- [ ] `sin(x)`, `cos(x)`, `arctan(x)`, `exp(x)`, `ln(x)` — math functions
+- [x] `abs(x)` — absolute value (integer and real)
+- [x] `sqr(x)` — square (x * x)
+- [x] `sqrt(x)` — square root (returns real)
+- [x] `trunc(x)` — truncate real to integer
+- [x] `round(x)` — round real to integer
+- [x] `sin(x)`, `cos(x)`, `arctan(x)`, `exp(x)`, `ln(x)` — math functions
 
 ### P0 - Ordinal
-- [ ] `succ(x)` — successor (x + 1 for ordinals)
-- [ ] `pred(x)` — predecessor (x - 1 for ordinals)
-- [ ] `inc(x)` / `inc(x, n)` — increment variable in-place
-- [ ] `dec(x)` / `dec(x, n)` — decrement variable in-place
-- [ ] `low(x)` / `high(x)` — bounds of array or ordinal type
+- [x] `succ(x)` — successor (x + 1 for ordinals)
+- [x] `pred(x)` — predecessor (x - 1 for ordinals)
+- [x] `inc(x)` / `inc(x, n)` — increment variable in-place
+- [x] `dec(x)` / `dec(x, n)` — decrement variable in-place
+- [x] `low(x)` / `high(x)` — bounds of array or ordinal type
 
 ### P1 - String Operations
-- [ ] `copy(s, index, count)` — substring
-- [ ] `concat(s1, s2, ...)` — concatenate (variadic)
-- [ ] `pos(substr, s)` — find substring position
-- [ ] `delete(s, index, count)` — remove from string (mutating)
-- [ ] `insert(source, s, index)` — insert into string (mutating)
-- [ ] `str(x, s)` — number to string
-- [ ] `val(s, x, code)` — string to number
-- [ ] `upcase(ch)` — uppercase a char
+- [x] `copy(s, index, count)` — substring
+- [x] `concat(s1, s2, ...)` — concatenate (variadic)
+- [x] `pos(substr, s)` — find substring position
+- [x] `delete(s, index, count)` — remove from string (mutating)
+- [x] `insert(source, s, index)` — insert into string (mutating)
+- [x] `str(x, s)` — number to string
+- [x] `val(s, x, code)` — string to number
+- [x] `upcase(ch)` — uppercase a char
 
 ### P1 - Set Operations
-- [ ] `include(s, elem)` — add element to set
-- [ ] `exclude(s, elem)` — remove element from set
-- [ ] Set comparison operators: `=`, `<>`, `<=` (subset), `>=` (superset)
+- [x] `include(s, elem)` — add element to set
+- [x] `exclude(s, elem)` — remove element from set
+- [x] Set comparison operators: `=`, `<>`, `<=` (subset), `>=` (superset)
 
 ---
 
@@ -69,15 +72,14 @@ Remaining features not yet implemented, compared to standard/Turbo Pascal.
 - [ ] Procedures/functions declared inside other procedures/functions
 - [ ] Access to enclosing scope variables (static link / display)
 
-### P1 - Forward Declarations
-- [ ] `forward` directive for mutual recursion
-- [ ] Token `KwForward` already exists in lexer but is unused by parser
+### ~~P1 - Forward Declarations~~ (DONE)
+- [x] `forward` directive for mutual recursion
 
-### P1 - Nested LValue Assignments
-- [ ] `a[i].field := expr` — index then field
-- [ ] `p^.next^ := expr` — chained pointer dereference
-- [ ] `r.field[i] := expr` — field then index
-- [ ] General chained LValue: any combination of `.field`, `[index]`, `^`
+### ~~P1 - Nested LValue Assignments~~ (DONE)
+- [x] `a[i].field := expr` — index then field
+- [x] `p^.next^ := expr` — chained pointer dereference
+- [x] `r.field[i] := expr` — field then index
+- [x] General chained LValue: any combination of `.field`, `[index]`, `^`
 
 ### P2 - Units / Modules
 - [ ] `unit` declaration with `interface` / `implementation` sections
