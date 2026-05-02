@@ -201,7 +201,7 @@ dependencies = [
 
 [[package]]
 name = "bruto-pascal"
-version = "0.1.0"
+version = "0.9.9"
 dependencies = [
  "bruto-ide",
  "bruto-lang",
