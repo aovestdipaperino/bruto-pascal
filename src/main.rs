@@ -1,3 +1,5 @@
+mod config;
+
 use std::env;
 use std::path::Path;
 use std::process;
@@ -7,7 +9,27 @@ fn main() {
 
     if args.len() < 2 {
         // No arguments — launch IDE
-        if let Err(e) = bruto_ide::ide::run(Box::new(bruto_pascal_lang::MiniPascal)) {
+        let config_path = config::config_path();
+        let cfg = config::Config::load(&config_path);
+
+        let on_about_shown: Option<Box<dyn FnMut()>> = if cfg.show_about_dialog_on_start {
+            let path = config_path.clone();
+            Some(Box::new(move || {
+                let _ = config::Config { show_about_dialog_on_start: false }.save(&path);
+            }))
+        } else {
+            None
+        };
+
+        let options = bruto_ide::ide::IdeOptions {
+            show_about_on_start: cfg.show_about_dialog_on_start,
+            on_about_shown,
+        };
+
+        if let Err(e) = bruto_ide::ide::run_with_options(
+            Box::new(bruto_pascal_lang::MiniPascal),
+            options,
+        ) {
             eprintln!("IDE error: {e}");
             process::exit(1);
         }
