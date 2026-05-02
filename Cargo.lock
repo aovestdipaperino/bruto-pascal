@@ -206,6 +206,7 @@ dependencies = [
  "bruto-ide",
  "bruto-lang",
  "bruto-pascal-lang",
+ "inkwell",
  "turbo-vision",
 ]
 
@@ -2473,7 +2474,7 @@ dependencies = [
 
 [[package]]
 name = "turbo-vision"
-version = "1.1.0"
+version = "1.1.1"
 dependencies = [
  "arboard",
  "async-trait",
@@ -2490,6 +2491,7 @@ dependencies = [
  "ssh-key",
  "tempfile",
  "tokio",
+ "tracing",
  "unicode-width",
 ]
 

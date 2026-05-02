@@ -4,14 +4,16 @@ Remaining features not yet implemented, compared to standard/Turbo Pascal.
 
 ## Implemented
 
-- **Types:** integer, real, boolean, char, string, pointer, array (single & multi-dim), record (with variant parts), enumerated, subrange, set, named aliases
-- **Declarations:** program, label, const, type, var, procedure, function, value/var parameters
-- **Statements:** assignment, if/then/else, while/do, for/to/downto, repeat/until, case/of, with, goto/label, begin/end blocks, procedure calls, writeln/write/readln, new/dispose
-- **Expressions:** arithmetic (+, -, *, div, /, mod), comparisons (=, <>, <, >, <=, >=), boolean (and, or, not), unary negation, in (set membership), function calls, array indexing (single & multi-dim), record field access, pointer dereference, set constructors
-- **Builtins:** length, ord, chr, string concat (+), string compare, abs, sqr, sqrt, trunc, round, sin, cos, arctan, exp, ln, succ, pred, inc, dec, low, high, copy, concat, pos, delete, insert, str, val, upcase, include, exclude
-- **Assignments:** simple, pointer deref, array index, multi-dim index, field, chained LValues (`a[i].field := expr`)
+- **Types:** integer, real, boolean, char, string, pointer, array (single & multi-dim), record (with variant parts), enumerated, subrange, set, file/text, procedural, conformant array, named aliases. `packed` accepted as no-op.
+- **Declarations:** program (with parameters `(input, output)`), label, const (with optional type annotation), type, var, procedure, function (incl. nested with capture-lifting), procedural and functional parameters, conformant array parameters, value/var parameters
+- **Statements:** assignment, if/then/else, while/do, for/to/downto, repeat/until, case/of, with, goto/label, begin/end blocks, procedure calls (incl. indirect through procedural variables), writeln/write/readln (with format specifiers and file form), new/dispose
+- **Expressions:** arithmetic (+, -, *, div, /, mod), comparisons (=, <>, <, >, <=, >=), boolean (and, or, not), unary negation, in (set membership), function calls (direct or indirect), type casts (`integer(x)` etc.), array indexing (single & multi-dim, fixed or conformant), record field access, pointer dereference, set constructors, `nil`, `maxint`
+- **Builtins:** length, ord, chr, string concat (+), string compare, abs, sqr, sqrt, trunc, round, sin, cos, arctan, exp, ln, odd, succ, pred, inc, dec, low, high, copy, concat, pos, delete, insert, str, val, upcase, include, exclude, pack, unpack
+- **File I/O:** assign, reset, rewrite, append, close, read, readln, write, writeln, eof, eoln, seek, filepos, filesize, page, get, put, f^ buffer variable, ioresult; predefined `input` and `output` text files
+- **Assignments:** simple, pointer deref, array index, multi-dim index, field, chained LValues (`a[i].field := expr`), file buffer (`f^ := x`)
 - **Forward declarations:** `procedure X; forward;` for mutual recursion
 - **Set comparisons:** `=`, `<>`, `<=` (subset), `>=` (superset)
+- **Compiler directives:** `{$R+/-}` bounds check, `{$Q+/-}` overflow check, `{$I+/-}` I/O check
 
 ---
 
@@ -51,26 +53,27 @@ Remaining features not yet implemented, compared to standard/Turbo Pascal.
 
 ## File I/O
 
-- [ ] `file of <type>` — typed file type
-- [ ] `text` — text file type
-- [ ] `assign(f, filename)` — associate file variable with path
-- [ ] `reset(f)` — open for reading
-- [ ] `rewrite(f)` — open for writing
-- [ ] `append(f)` — open for appending (Turbo Pascal extension)
-- [ ] `close(f)` — close file
-- [ ] `read(f, vars...)` / `write(f, exprs...)` — file read/write
-- [ ] `readln(f, vars...)` / `writeln(f, exprs...)` — file read/write with newline
-- [ ] `eof(f)` / `eoln(f)` — end-of-file / end-of-line tests
-- [ ] `seek(f, pos)` / `filepos(f)` / `filesize(f)` — random access (typed files)
-- [ ] `ioresult` — I/O error code (with `{$I-}` equivalent)
+- [x] `file of <type>` — typed file type (parsed; runtime treats as text-style)
+- [x] `text` — text file type
+- [x] `assign(f, filename)` — associate file variable with path
+- [x] `reset(f)` — open for reading
+- [x] `rewrite(f)` — open for writing
+- [x] `append(f)` — open for appending (Turbo Pascal extension)
+- [x] `close(f)` — close file
+- [x] `read(f, vars...)` / `write(f, exprs...)` — file read/write
+- [x] `readln(f, vars...)` / `writeln(f, exprs...)` — file read/write with newline
+- [x] `eof(f)` — end-of-file test
+- [x] `eoln(f)` — end-of-line test (peeks next char)
+- [x] `seek(f, pos)` / `filepos(f)` / `filesize(f)` — random access via fseek/ftell
+- [x] `ioresult` — I/O error code (with `{$I+/-}` directive recognized)
 
 ---
 
 ## Language Features
 
-### P0 - Nested Procedures/Functions
-- [ ] Procedures/functions declared inside other procedures/functions
-- [ ] Access to enclosing scope variables (static link / display)
+### ~~P0 - Nested Procedures/Functions~~ (DONE)
+- [x] Procedures/functions declared inside other procedures/functions
+- [x] Access to enclosing scope variables (via lifted captures, equivalent to static link)
 
 ### ~~P1 - Forward Declarations~~ (DONE)
 - [x] `forward` directive for mutual recursion
@@ -99,22 +102,23 @@ Remaining features not yet implemented, compared to standard/Turbo Pascal.
 
 ## Type System Improvements
 
-- [ ] Typed constants (`const x: integer = 42` — mutable, initialized)
-- [ ] String length type (`string[N]` — fixed-length strings)
-- [ ] Packed arrays / packed records
-- [ ] Type coercion / type casting (`integer(x)`, `char(x)`)
-- [ ] Conformant array parameters (ISO Pascal)
+- [x] Typed constants (`const x: integer = 42` — mutable, initialized)
+- [x] String length type (`string[N]` — parsed; treated as plain string)
+- [x] Packed arrays / packed records (`packed` accepted; layout unchanged)
+- [x] Type coercion / type casting (`integer(x)`, `char(x)`, `real(x)`, `boolean(x)`)
+- [x] Conformant array parameters (ISO 7185)
+- [x] Procedural and functional parameters (Wirth)
 
 ---
 
 ## Codegen / Runtime
 
-- [ ] Bounds checking for arrays and subranges (with compiler switch)
-- [ ] Overflow checking for integer arithmetic
+- [x] Bounds checking for arrays (with `{$R+}` switch)
+- [x] Overflow checking for integer arithmetic (with `{$Q+}` switch)
 - [ ] Stack overflow detection
-- [ ] `readln` for types other than integer (real, char, string)
-- [ ] Write format specifiers: `write(x:10)`, `write(r:8:2)`
-- [ ] `nil` constant for pointer types
+- [x] `readln` for types other than integer (real, char, string; multi-target)
+- [x] Write format specifiers: `write(x:10)`, `write(r:8:2)`
+- [x] `nil` constant for pointer types
 - [ ] Proper string memory management (currently uses static/leaked strings)
 - [ ] Dynamic string support (heap-allocated, reference-counted or copied)
 
@@ -122,11 +126,11 @@ Remaining features not yet implemented, compared to standard/Turbo Pascal.
 
 ## IDE / Debugger
 
-- [ ] Syntax highlighting for new keywords: `set`, `in`, `label`, `goto`, `case`, `with`
-  (already partially done — verify all are highlighted)
-- [ ] Display set values in watch window
-- [ ] Display enum values by name in watch window (currently shows ordinal)
-- [ ] Display variant record fields in watch window
+- [x] Syntax highlighting for new keywords: `set`, `in`, `label`, `goto`, `case`, `with`,
+      `file`, `assign`, `reset`, `rewrite`, `close`, `eof`, `eoln`, `nil`
+- [x] Display set values in watch window (decoded as Pascal set literal)
+- [ ] Display enum values by name in watch window (still shows ordinal — needs DWARF enum metadata)
+- [ ] Display variant record fields in watch window (lldb shows raw bytes for variant union)
 
 ---
 

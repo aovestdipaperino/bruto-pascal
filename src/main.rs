@@ -108,6 +108,7 @@ fn compile_and_run(source_file: &str, output_file: Option<&str>, run_after: bool
         &context,
         source_abs.to_str().unwrap_or(source_file),
     );
+    codegen.set_directives(parser.directives);
     if let Err(e) = codegen.compile(&program) {
         eprintln!("{source_file}:{e}");
         return 1;
@@ -118,6 +119,7 @@ fn compile_and_run(source_file: &str, output_file: Option<&str>, run_after: bool
         eprintln!("error: {e}");
         return 1;
     }
+    let _ = codegen.write_metadata(&exe_path);
 
     eprintln!("Compiled: {source_file} -> {exe_path}");
 
