@@ -22,8 +22,36 @@ use turbo_vision::views::msgbox::{
 
 const REPO: &str = "aovestdipaperino/bruto-pascal";
 const BIN_NAME: &str = "brutop";
+/// Homebrew formula name. The Cellar path layout is
+/// `<prefix>/Cellar/<FORMULA_NAME>/<version>/bin/<BIN_NAME>`.
+const FORMULA_NAME: &str = "bruto-pascal";
 const API_TIMEOUT: Duration = Duration::from_secs(2);
 const DOWNLOAD_TIMEOUT: Duration = Duration::from_secs(120);
+
+/// How brutop was installed, detected from the running binary's path.
+/// We dispatch on this when replacing the binary so brew/scoop metadata
+/// stay in sync with the new version.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum InstallMethod {
+    Brew,
+    Scoop,
+    Cargo,
+    Unknown,
+}
+
+fn detect_install_method() -> InstallMethod {
+    let Ok(exe) = std::env::current_exe() else { return InstallMethod::Unknown };
+    let path = exe.to_string_lossy();
+    if path.contains(".cargo/bin") || path.contains(".cargo\\bin") {
+        InstallMethod::Cargo
+    } else if path.contains("/homebrew/") || path.contains("/Cellar/") {
+        InstallMethod::Brew
+    } else if path.contains("\\scoop\\") || path.contains("/scoop/") {
+        InstallMethod::Scoop
+    } else {
+        InstallMethod::Unknown
+    }
+}
 
 /// Entry point — runs the whole flow when called from the IDE's
 /// on_desktop_ready hook. No-op for `cargo run` builds (binary lives in
@@ -132,9 +160,228 @@ fn perform_upgrade(version: &str) -> Result<(), String> {
     let asset = asset_name(version);
     let url = fetch_asset_url(version, &asset)?;
     let tmp = download_and_extract(&url)?;
-    self_replace::self_replace(&tmp).map_err(|e| format!("binary replacement failed: {e}"))?;
+    let method = detect_install_method();
+    let result = replace_binary(&tmp, method, version);
     let _ = std::fs::remove_file(&tmp);
+    result
+}
+
+/// Dispatch the binary swap to the strategy that matches how brutop was
+/// installed. Each strategy keeps the package manager's metadata in sync
+/// so `brew info bruto-pascal` / `scoop status brutop` report the new
+/// version after the upgrade.
+fn replace_binary(new_exe: &Path, method: InstallMethod, new_version: &str) -> Result<(), String> {
+    match method {
+        InstallMethod::Brew => replace_for_brew(new_exe, new_version),
+        InstallMethod::Scoop => replace_for_scoop(new_exe, new_version),
+        InstallMethod::Cargo | InstallMethod::Unknown => replace_default(new_exe),
+    }
+}
+
+fn replace_default(new_exe: &Path) -> Result<(), String> {
+    // self_replace resolves symlinks via fs::read_link, which can return
+    // relative targets (Homebrew always does this). When that happens
+    // subsequent operations resolve the path from CWD instead of the
+    // symlink's parent, which fails. Canonicalising up-front sidesteps it.
+    #[cfg(unix)]
+    {
+        let exe = std::env::current_exe().ok();
+        let canonical = exe.as_ref().and_then(|e| e.canonicalize().ok());
+        if let (Some(exe), Some(ref canonical)) = (&exe, canonical) {
+            if exe.as_path() != canonical.as_path() {
+                return install_binary(new_exe, canonical);
+            }
+        }
+    }
+    self_replace::self_replace(new_exe)
+        .map_err(|e| format!("binary replacement failed: {e}"))
+}
+
+/// Atomic replace by copying into a sibling temp path, chmod+x, and
+/// renaming over the target. Avoids ETXTBSY on Linux (rename swaps the
+/// directory entry rather than writing into the running executable).
+#[cfg(unix)]
+fn install_binary(src: &Path, target: &Path) -> Result<(), String> {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = target
+        .parent()
+        .ok_or_else(|| "cannot determine target directory".to_string())?;
+    let temp = dir.join(format!(".brutop_upgrade_{}", std::process::id()));
+    std::fs::copy(src, &temp).map_err(|e| format!("cannot copy new binary: {e}"))?;
+    std::fs::set_permissions(&temp, std::fs::Permissions::from_mode(0o755))
+        .map_err(|e| format!("cannot set permissions: {e}"))?;
+    if let Err(e) = std::fs::rename(&temp, target) {
+        let _ = std::fs::remove_file(&temp);
+        return Err(format!("cannot replace binary: {e}"));
+    }
     Ok(())
+}
+
+#[cfg(not(unix))]
+fn install_binary(_src: &Path, _target: &Path) -> Result<(), String> {
+    Err("install_binary not implemented on this platform".into())
+}
+
+// ── Homebrew ────────────────────────────────────────────────────────────
+
+#[cfg(unix)]
+fn replace_for_brew(new_exe: &Path, new_version: &str) -> Result<(), String> {
+    let exe = std::env::current_exe()
+        .map_err(|e| format!("cannot determine current exe: {e}"))?;
+    let canonical = exe
+        .canonicalize()
+        .map_err(|e| format!("cannot resolve binary path: {e}"))?;
+
+    // Validate Cellar layout: <prefix>/Cellar/<formula>/<version>/bin/<binary>
+    let bin_dir = match canonical.parent() {
+        Some(p) if p.file_name().and_then(|n| n.to_str()) == Some("bin") => p,
+        _ => return replace_default(new_exe),
+    };
+    let Some(version_dir) = bin_dir.parent() else { return replace_default(new_exe) };
+    let Some(formula_dir) = version_dir.parent() else { return replace_default(new_exe) };
+    let cellar_dir = match formula_dir.parent() {
+        Some(p) if p.file_name().and_then(|n| n.to_str()) == Some("Cellar") => p,
+        _ => return replace_default(new_exe),
+    };
+    let Some(prefix) = cellar_dir.parent() else { return replace_default(new_exe) };
+
+    let Some(bin_name) = canonical.file_name() else { return replace_default(new_exe) };
+    let Some(old_version_os) = version_dir.file_name() else { return replace_default(new_exe) };
+    let old_version = old_version_os.to_string_lossy().to_string();
+
+    // Step 1 (critical): atomic binary swap inside the Cellar.
+    install_binary(new_exe, &canonical)?;
+
+    // Steps 2-4 update Cellar metadata so `brew` reports the new version.
+    // Best-effort: failures here just leave brew slightly out-of-date.
+    if old_version != new_version {
+        let new_version_dir = formula_dir.join(new_version);
+
+        if std::fs::rename(version_dir, &new_version_dir).is_ok() {
+            // Update <prefix>/bin/<binary> symlink.
+            let symlink_path = prefix.join("bin").join(bin_name);
+            if let Ok(meta) = std::fs::symlink_metadata(&symlink_path) {
+                if meta.file_type().is_symlink() {
+                    if let Ok(old_target) = std::fs::read_link(&symlink_path) {
+                        let new_target = std::path::PathBuf::from(
+                            old_target
+                                .to_string_lossy()
+                                .replacen(&old_version, new_version, 1),
+                        );
+                        let _ = std::fs::remove_file(&symlink_path);
+                        let _ = std::os::unix::fs::symlink(&new_target, &symlink_path);
+                    }
+                }
+            }
+
+            // Patch INSTALL_RECEIPT.json so `brew info` is accurate.
+            let receipt = new_version_dir.join("INSTALL_RECEIPT.json");
+            if receipt.exists() {
+                if let Ok(text) = std::fs::read_to_string(&receipt) {
+                    let _ = std::fs::write(&receipt, text.replace(&old_version, new_version));
+                }
+            }
+        }
+    }
+
+    // FORMULA_NAME is unused by this code path right now (we discover the
+    // formula directory by walking up from the binary). Keep the constant
+    // visible as a single source of truth for any future Cellar work.
+    let _ = FORMULA_NAME;
+    Ok(())
+}
+
+#[cfg(not(unix))]
+fn replace_for_brew(new_exe: &Path, _new_version: &str) -> Result<(), String> {
+    replace_default(new_exe)
+}
+
+// ── Scoop ───────────────────────────────────────────────────────────────
+
+#[cfg(windows)]
+fn replace_for_scoop(new_exe: &Path, new_version: &str) -> Result<(), String> {
+    self_replace::self_replace(new_exe)
+        .map_err(|e| format!("binary replacement failed: {e}"))?;
+    update_scoop_metadata(new_version);
+    Ok(())
+}
+
+#[cfg(windows)]
+fn update_scoop_metadata(new_version: &str) {
+    let Ok(exe) = std::env::current_exe() else { return };
+    let canonical = exe.canonicalize().unwrap_or(exe);
+    let Some(version_dir) = find_scoop_version_dir(&canonical) else { return };
+    let Some(app_dir) = version_dir.parent() else { return };
+    let old_version = version_dir
+        .file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .unwrap_or_default();
+    if old_version == new_version || old_version == "current" {
+        return;
+    }
+
+    let new_version_dir = app_dir.join(new_version);
+    if std::fs::create_dir_all(&new_version_dir).is_err() { return }
+
+    // Copy the old version directory's metadata files into the new one.
+    if let Ok(entries) = std::fs::read_dir(&version_dir) {
+        for entry in entries.flatten() {
+            if !entry.file_type().map(|t| t.is_file()).unwrap_or(false) {
+                continue;
+            }
+            let name = entry.file_name();
+            if name.to_string_lossy().contains("__self_delete__") { continue }
+            let _ = std::fs::copy(entry.path(), new_version_dir.join(&name));
+        }
+    }
+
+    // Patch the manifest.
+    let manifest = new_version_dir.join("manifest.json");
+    if manifest.exists() {
+        if let Ok(text) = std::fs::read_to_string(&manifest) {
+            let _ = std::fs::write(&manifest, text.replace(&old_version, new_version));
+        }
+    }
+
+    // Re-point the `current` junction.
+    let current = app_dir.join("current");
+    let _ = std::fs::remove_dir(&current);
+    use std::os::windows::process::CommandExt;
+    let _ = std::process::Command::new("cmd")
+        .args([
+            "/c", "mklink", "/J",
+            &current.to_string_lossy(),
+            &new_version_dir.to_string_lossy(),
+        ])
+        .creation_flags(0x08000000) // CREATE_NO_WINDOW
+        .status();
+}
+
+/// Walk the canonical path looking for `<scoop>/apps/<app>/<version>/…`.
+#[cfg(windows)]
+fn find_scoop_version_dir(path: &Path) -> Option<PathBuf> {
+    let mut found_apps = false;
+    let mut depth_after_apps = 0u8;
+    let mut result = PathBuf::new();
+    for comp in path.components() {
+        result.push(comp);
+        if found_apps {
+            depth_after_apps += 1;
+            if depth_after_apps == 2 {
+                return Some(result);
+            }
+        } else if let std::path::Component::Normal(name) = comp {
+            if name.to_string_lossy().eq_ignore_ascii_case("apps") {
+                found_apps = true;
+            }
+        }
+    }
+    None
+}
+
+#[cfg(not(windows))]
+fn replace_for_scoop(new_exe: &Path, _new_version: &str) -> Result<(), String> {
+    replace_default(new_exe)
 }
 
 /// Matches the release workflow's archive convention:
