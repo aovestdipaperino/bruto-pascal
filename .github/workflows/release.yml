@@ -66,15 +66,16 @@ jobs:
 
       - name: Install LLVM 18 (Windows)
         if: runner.os == 'Windows'
+        id: llvm_win
         uses: KyleMayes/install-llvm-action@v2
         with:
           version: "18.1"
 
       - name: Set LLVM env (Windows)
         if: runner.os == 'Windows'
-        shell: bash
+        shell: pwsh
         run: |
-          echo "LLVM_SYS_181_PREFIX=$LLVM_PATH" >> "$GITHUB_ENV"
+          "LLVM_SYS_181_PREFIX=${{ steps.llvm_win.outputs.path }}" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Build release binary
         run: cargo build --release --target ${{ matrix.target }}
