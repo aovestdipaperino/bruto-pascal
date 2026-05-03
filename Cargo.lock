@@ -185,7 +185,7 @@ dependencies = [
 
 [[package]]
 name = "bruto-ide"
-version = "0.2.0"
+version = "0.9.9"
 dependencies = [
  "bruto-lang",
  "turbo-vision",
@@ -193,7 +193,7 @@ dependencies = [
 
 [[package]]
 name = "bruto-lang"
-version = "0.1.0"
+version = "0.9.9"
 dependencies = [
  "inkwell",
  "turbo-vision",
@@ -214,7 +214,7 @@ dependencies = [
 
 [[package]]
 name = "bruto-pascal-lang"
-version = "0.2.0"
+version = "0.9.9"
 dependencies = [
  "bruto-lang",
  "inkwell",
