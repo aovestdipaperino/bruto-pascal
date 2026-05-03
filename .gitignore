@@ -1,6 +1,7 @@
 
 /target
 .tokensave/
+.claude/
 data/
 cache/
 generated-illustrations/
