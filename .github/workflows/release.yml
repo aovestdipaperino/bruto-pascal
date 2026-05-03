@@ -1,0 +1,194 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build ${{ matrix.name }}
+    if: github.event_name == 'workflow_dispatch' || !github.event.release.prerelease
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: aarch64-macos
+            runner: macos-14
+            target: aarch64-apple-darwin
+            bottle_tag: arm64_sonoma
+            archive: tar.gz
+          - name: x86_64-linux
+            runner: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            bottle_tag: x86_64_linux
+            archive: tar.gz
+          - name: aarch64-linux
+            runner: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            archive: tar.gz
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install LLVM 18 (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install llvm@18
+          echo "LLVM_SYS_181_PREFIX=$(brew --prefix llvm@18)" >> "$GITHUB_ENV"
+
+      - name: Install LLVM 18 (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          UBUNTU_CODENAME=$(lsb_release -cs)
+          echo "deb https://apt.llvm.org/${UBUNTU_CODENAME}/ llvm-toolchain-${UBUNTU_CODENAME}-18 main" | sudo tee /etc/apt/sources.list.d/llvm.list
+          sudo apt-get update
+          sudo apt-get install -y llvm-18-dev libllvm18 clang-18 libclang-18-dev libpolly-18-dev
+          echo "LLVM_SYS_181_PREFIX=/usr/lib/llvm-18" >> "$GITHUB_ENV"
+
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Get version
+        id: version
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Package binary
+        run: |
+          cd target/${{ matrix.target }}/release
+          tar czf ../../../bruto-pascal-${{ github.ref_name }}-${{ matrix.name }}.tar.gz bruto-pascal
+          cd ../../..
+
+      - name: Upload binary archive
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: gh release upload ${{ github.ref_name }} bruto-pascal-${{ github.ref_name }}-${{ matrix.name }}.${{ matrix.archive }} --clobber
+
+      # --- Homebrew bottle (only for platforms with bottle_tag) ---
+
+      - name: Package Homebrew bottle
+        if: matrix.bottle_tag && github.event_name == 'release'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          BOTTLE_TAG="${{ matrix.bottle_tag }}"
+          mkdir -p bruto-pascal/${VERSION}/bin
+          cp target/${{ matrix.target }}/release/bruto-pascal bruto-pascal/${VERSION}/bin/bruto-pascal
+          chmod +x bruto-pascal/${VERSION}/bin/bruto-pascal
+          tar czf "bruto-pascal-${VERSION}.${BOTTLE_TAG}.bottle.tar.gz" bruto-pascal/
+
+      - name: Upload bottle artifact
+        if: matrix.bottle_tag && github.event_name == 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: bottle-${{ matrix.bottle_tag }}
+          path: "bruto-pascal-*.bottle.tar.gz"
+
+  update-homebrew:
+    name: Update Homebrew tap
+    if: github.event_name == 'release' && !github.event.release.prerelease && !cancelled()
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Download bottle artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: bottles
+          merge-multiple: true
+
+      - name: Upload bottles to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for f in bottles/bruto-pascal-*.bottle.tar.gz; do
+            gh release upload "${GITHUB_REF_NAME}" "$f" --clobber
+          done
+
+      - name: Download source tarball
+        run: |
+          curl -sL "https://github.com/${{ github.repository }}/archive/refs/tags/${GITHUB_REF_NAME}.tar.gz" -o "source.tar.gz"
+
+      - name: Compute SHA256 hashes
+        id: hashes
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          SOURCE_SHA=$(sha256sum source.tar.gz | awk '{print $1}')
+          echo "source_sha=${SOURCE_SHA}" >> "$GITHUB_OUTPUT"
+
+          for f in bottles/bruto-pascal-*.bottle.tar.gz; do
+            tag=$(basename "$f" | sed "s/bruto-pascal-${VERSION}\.\(.*\)\.bottle\.tar\.gz/\1/")
+            sha=$(sha256sum "$f" | awk '{print $1}')
+            echo "${tag}_sha=${sha}" >> "$GITHUB_OUTPUT"
+          done
+
+      - name: Update formula
+        env:
+          TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          SOURCE_SHA="${{ steps.hashes.outputs.source_sha }}"
+          ARM64_SONOMA_SHA="${{ steps.hashes.outputs.arm64_sonoma_sha }}"
+          X86_64_LINUX_SHA="${{ steps.hashes.outputs.x86_64_linux_sha }}"
+
+          git clone "https://x-access-token:${TAP_GITHUB_TOKEN}@github.com/aovestdipaperino/homebrew-tap.git" tap
+
+          cat > tap/Formula/bruto-pascal.rb << EOF
+          class BrutoPascal < Formula
+            desc "TUI-based Mini-Pascal IDE with LLVM-backed compiler and lldb debugger"
+            homepage "https://github.com/aovestdipaperino/bruto-pascal"
+            url "https://github.com/aovestdipaperino/bruto-pascal/archive/refs/tags/v${VERSION}.tar.gz"
+            sha256 "${SOURCE_SHA}"
+            license "MIT"
+
+            bottle do
+              root_url "https://github.com/aovestdipaperino/bruto-pascal/releases/download/v${VERSION}"
+              sha256 cellar: :any_skip_relocation, arm64_sonoma: "${ARM64_SONOMA_SHA}"
+              sha256 cellar: :any_skip_relocation, x86_64_linux: "${X86_64_LINUX_SHA}"
+            end
+
+            depends_on "llvm@18"
+            depends_on "rust" => :build
+
+            def install
+              ENV["LLVM_SYS_181_PREFIX"] = Formula["llvm@18"].opt_prefix
+              system "cargo", "install", *std_cargo_args
+            end
+
+            test do
+              system "#{bin}/bruto-pascal", "--help"
+            end
+          end
+          EOF
+
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/bruto-pascal.rb
+          git diff --cached --quiet || git commit -m "bruto-pascal ${VERSION}"
+          git push
