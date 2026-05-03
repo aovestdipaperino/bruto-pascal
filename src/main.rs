@@ -146,13 +146,30 @@ fn compile_and_run(source_file: &str, output_file: Option<&str>, run_after: bool
 
     // Parse
     let mut parser = bruto_pascal_lang::parser::Parser::new(&source);
-    let program = match parser.parse_program() {
+    let mut program = match parser.parse_program() {
         Ok(p) => p,
         Err(e) => {
             eprintln!("{source_file}:{e}");
             return 1;
         }
     };
+
+    // Resolve `uses` against the source file's directory + cwd.
+    let mut search_dirs: Vec<std::path::PathBuf> = Vec::new();
+    if let Some(dir) = source_path.parent() {
+        if !dir.as_os_str().is_empty() {
+            search_dirs.push(dir.to_path_buf());
+        }
+    }
+    if let Ok(cwd) = std::env::current_dir() {
+        if !search_dirs.iter().any(|d| d == &cwd) {
+            search_dirs.push(cwd);
+        }
+    }
+    if let Err(e) = bruto_pascal_lang::resolve_uses(&mut program, &search_dirs) {
+        eprintln!("error: {e}");
+        return 1;
+    }
 
     // Codegen
     let source_abs =

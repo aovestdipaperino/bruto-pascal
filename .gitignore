@@ -13,3 +13,8 @@ generated-illustrations/
 delete-me.pas
 # Compiled output for demo.pas (keep the source, ignore the binary)
 /demo
+/long-demo
+/SAMPLE
+/demo-units/Demo
+/demo-units/MathUtils
+/demo-units/Shapes

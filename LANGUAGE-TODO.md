@@ -84,9 +84,11 @@ Remaining features not yet implemented, compared to standard/Turbo Pascal.
 - [x] `r.field[i] := expr` — field then index
 - [x] General chained LValue: any combination of `.field`, `[index]`, `^`
 
-### P2 - Units / Modules
-- [ ] `unit` declaration with `interface` / `implementation` sections
-- [ ] `uses` clause for importing units
+### ~~P2 - Units / Modules~~ (DONE)
+- [x] `unit` declaration with `interface` / `implementation` sections
+- [x] `uses` clause for importing units (resolves `Foo.pas` against
+      the source dir + cwd; cycle-checked; supports `initialization`
+      blocks)
 
 ### P2 - Object-Oriented (Turbo Pascal 5.5+)
 - [ ] `object` types with methods and inheritance
@@ -129,8 +131,11 @@ Remaining features not yet implemented, compared to standard/Turbo Pascal.
 - [x] Syntax highlighting for new keywords: `set`, `in`, `label`, `goto`, `case`, `with`,
       `file`, `assign`, `reset`, `rewrite`, `close`, `eof`, `eoln`, `nil`
 - [x] Display set values in watch window (decoded as Pascal set literal)
-- [ ] Display enum values by name in watch window (still shows ordinal — needs DWARF enum metadata)
-- [ ] Display variant record fields in watch window (lldb shows raw bytes for variant union)
+- [x] Display enum values by name in watch window (codegen emits
+      `DW_TAG_enumeration_type` so lldb prints `(Color) c = Green`)
+- [x] Display variant record fields in watch window (DWARF struct
+      type emits all variants overlapped at the union offset; the
+      IDE filters down to the active case using the tag value)
 
 ---
 
