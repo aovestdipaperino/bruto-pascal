@@ -24,8 +24,13 @@ jobs:
             runner: macos-14
           - name: Linux
             runner: ubuntu-latest
-          - name: Windows
-            runner: windows-latest
+
+    # Windows is deliberately omitted: official LLVM binaries on Windows
+    # ship without llvm-config.exe, which llvm-sys requires. Adding
+    # Windows back means either building LLVM from source on the runner
+    # or sourcing a community prebuilt that includes llvm-config. The
+    # codegen already has the MSVC path (Stdio enum, clang linker) so
+    # the only thing missing once LLVM is sorted is the matrix entry.
 
     steps:
       - uses: actions/checkout@v4
@@ -51,22 +56,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y llvm-18-dev libllvm18 clang-18 libclang-18-dev libpolly-18-dev
           echo "LLVM_SYS_181_PREFIX=/usr/lib/llvm-18" >> "$GITHUB_ENV"
-
-      - name: Install LLVM 18 (Windows)
-        if: runner.os == 'Windows'
-        id: llvm_win
-        uses: KyleMayes/install-llvm-action@v2
-        with:
-          version: "18.1"
-
-      - name: Set LLVM env (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          # install-llvm-action exports LLVM_PATH but its outputs schema
-          # has changed across major versions; reading the env var
-          # directly is the only path that's been stable.
-          "LLVM_SYS_181_PREFIX=$env:LLVM_PATH" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Run tests
         # --tests --lib limits cargo's compile set to library + integration
