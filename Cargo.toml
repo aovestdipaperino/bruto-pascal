@@ -16,10 +16,14 @@ path = "src/main.rs"
 bruto-ide = { path = "bruto-ide" }
 bruto-lang = { path = "bruto-lang" }
 bruto-pascal-lang = { path = "bruto-pascal-lang" }
+flate2 = "1"
 inkwell = { version = "0.8.0", features = ["llvm18-1"] }
+self-replace = "1"
 serde = { version = "1", features = ["derive"] }
+tar = "0.4"
 toml = "0.8"
 turbo-vision = { path = "turbo-vision-4-rust" }
+ureq = { version = "3", features = ["json"] }
 
 [patch."https://github.com/aovestdipaperino/turbo-vision-4-rust.git"]
 turbo-vision = { path = "turbo-vision-4-rust" }

@@ -1,4 +1,5 @@
 mod config;
+mod update;
 
 use std::env;
 use std::path::Path;
@@ -41,6 +42,9 @@ fn main() {
                 "Bruto Pascal {}\n\n(c) 2026 Enzo Lombardi",
                 env!("CARGO_PKG_VERSION"),
             )),
+            on_desktop_ready: Some(Box::new(|app| {
+                update::check_and_prompt(app);
+            })),
         };
 
         if let Err(e) = bruto_ide::ide::run_with_options(
