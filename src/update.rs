@@ -16,9 +16,7 @@ use std::time::Duration;
 
 use turbo_vision::app::Application;
 use turbo_vision::core::command::CM_YES;
-use turbo_vision::views::msgbox::{
-    confirmation_box_yes_no, message_box_error, message_box_ok,
-};
+use turbo_vision::views::msgbox::{confirmation_box_yes_no, message_box_error, message_box_ok};
 
 const REPO: &str = "aovestdipaperino/bruto-pascal";
 const BIN_NAME: &str = "brutop";
@@ -40,7 +38,9 @@ enum InstallMethod {
 }
 
 fn detect_install_method() -> InstallMethod {
-    let Ok(exe) = std::env::current_exe() else { return InstallMethod::Unknown };
+    let Ok(exe) = std::env::current_exe() else {
+        return InstallMethod::Unknown;
+    };
     let path = exe.to_string_lossy();
     if path.contains(".cargo/bin") || path.contains(".cargo\\bin") {
         InstallMethod::Cargo
@@ -62,7 +62,9 @@ pub fn check_and_prompt(app: &mut Application) {
     }
 
     let current = env!("CARGO_PKG_VERSION");
-    let Some(latest) = fetch_latest_version() else { return };
+    let Some(latest) = fetch_latest_version() else {
+        return;
+    };
     if !is_newer(current, &latest) {
         return;
     }
@@ -92,7 +94,9 @@ pub fn check_and_prompt(app: &mut Application) {
 /// `target/debug/brutop` with a release tarball would be both surprising
 /// and useless (next `cargo run` would put the dev binary right back).
 fn running_from_target_dir() -> bool {
-    let Ok(exe) = std::env::current_exe() else { return true };
+    let Ok(exe) = std::env::current_exe() else {
+        return true;
+    };
     let s = exe.to_string_lossy();
     s.contains("/target/") || s.contains("\\target\\")
 }
@@ -193,8 +197,7 @@ fn replace_default(new_exe: &Path) -> Result<(), String> {
             }
         }
     }
-    self_replace::self_replace(new_exe)
-        .map_err(|e| format!("binary replacement failed: {e}"))
+    self_replace::self_replace(new_exe).map_err(|e| format!("binary replacement failed: {e}"))
 }
 
 /// Atomic replace by copying into a sibling temp path, chmod+x, and
@@ -226,8 +229,7 @@ fn install_binary(_src: &Path, _target: &Path) -> Result<(), String> {
 
 #[cfg(unix)]
 fn replace_for_brew(new_exe: &Path, new_version: &str) -> Result<(), String> {
-    let exe = std::env::current_exe()
-        .map_err(|e| format!("cannot determine current exe: {e}"))?;
+    let exe = std::env::current_exe().map_err(|e| format!("cannot determine current exe: {e}"))?;
     let canonical = exe
         .canonicalize()
         .map_err(|e| format!("cannot resolve binary path: {e}"))?;
@@ -237,16 +239,26 @@ fn replace_for_brew(new_exe: &Path, new_version: &str) -> Result<(), String> {
         Some(p) if p.file_name().and_then(|n| n.to_str()) == Some("bin") => p,
         _ => return replace_default(new_exe),
     };
-    let Some(version_dir) = bin_dir.parent() else { return replace_default(new_exe) };
-    let Some(formula_dir) = version_dir.parent() else { return replace_default(new_exe) };
+    let Some(version_dir) = bin_dir.parent() else {
+        return replace_default(new_exe);
+    };
+    let Some(formula_dir) = version_dir.parent() else {
+        return replace_default(new_exe);
+    };
     let cellar_dir = match formula_dir.parent() {
         Some(p) if p.file_name().and_then(|n| n.to_str()) == Some("Cellar") => p,
         _ => return replace_default(new_exe),
     };
-    let Some(prefix) = cellar_dir.parent() else { return replace_default(new_exe) };
+    let Some(prefix) = cellar_dir.parent() else {
+        return replace_default(new_exe);
+    };
 
-    let Some(bin_name) = canonical.file_name() else { return replace_default(new_exe) };
-    let Some(old_version_os) = version_dir.file_name() else { return replace_default(new_exe) };
+    let Some(bin_name) = canonical.file_name() else {
+        return replace_default(new_exe);
+    };
+    let Some(old_version_os) = version_dir.file_name() else {
+        return replace_default(new_exe);
+    };
     let old_version = old_version_os.to_string_lossy().to_string();
 
     // Step 1 (critical): atomic binary swap inside the Cellar.
@@ -300,18 +312,23 @@ fn replace_for_brew(new_exe: &Path, _new_version: &str) -> Result<(), String> {
 
 #[cfg(windows)]
 fn replace_for_scoop(new_exe: &Path, new_version: &str) -> Result<(), String> {
-    self_replace::self_replace(new_exe)
-        .map_err(|e| format!("binary replacement failed: {e}"))?;
+    self_replace::self_replace(new_exe).map_err(|e| format!("binary replacement failed: {e}"))?;
     update_scoop_metadata(new_version);
     Ok(())
 }
 
 #[cfg(windows)]
 fn update_scoop_metadata(new_version: &str) {
-    let Ok(exe) = std::env::current_exe() else { return };
+    let Ok(exe) = std::env::current_exe() else {
+        return;
+    };
     let canonical = exe.canonicalize().unwrap_or(exe);
-    let Some(version_dir) = find_scoop_version_dir(&canonical) else { return };
-    let Some(app_dir) = version_dir.parent() else { return };
+    let Some(version_dir) = find_scoop_version_dir(&canonical) else {
+        return;
+    };
+    let Some(app_dir) = version_dir.parent() else {
+        return;
+    };
     let old_version = version_dir
         .file_name()
         .map(|n| n.to_string_lossy().to_string())
@@ -321,7 +338,9 @@ fn update_scoop_metadata(new_version: &str) {
     }
 
     let new_version_dir = app_dir.join(new_version);
-    if std::fs::create_dir_all(&new_version_dir).is_err() { return }
+    if std::fs::create_dir_all(&new_version_dir).is_err() {
+        return;
+    }
 
     // Copy the old version directory's metadata files into the new one.
     if let Ok(entries) = std::fs::read_dir(&version_dir) {
@@ -330,7 +349,9 @@ fn update_scoop_metadata(new_version: &str) {
                 continue;
             }
             let name = entry.file_name();
-            if name.to_string_lossy().contains("__self_delete__") { continue }
+            if name.to_string_lossy().contains("__self_delete__") {
+                continue;
+            }
             let _ = std::fs::copy(entry.path(), new_version_dir.join(&name));
         }
     }
@@ -349,7 +370,9 @@ fn update_scoop_metadata(new_version: &str) {
     use std::os::windows::process::CommandExt;
     let _ = std::process::Command::new("cmd")
         .args([
-            "/c", "mklink", "/J",
+            "/c",
+            "mklink",
+            "/J",
             &current.to_string_lossy(),
             &new_version_dir.to_string_lossy(),
         ])
@@ -416,9 +439,7 @@ fn fetch_asset_url(version: &str, expected: &str) -> Result<String, String> {
         assets: Vec<Asset>,
     }
 
-    let url = format!(
-        "https://api.github.com/repos/{REPO}/releases/tags/v{version}",
-    );
+    let url = format!("https://api.github.com/repos/{REPO}/releases/tags/v{version}",);
     let agent: ureq::Agent = ureq::Agent::config_builder()
         .timeout_global(Some(DOWNLOAD_TIMEOUT))
         .build()
@@ -477,7 +498,10 @@ fn extract_tar_gz(data: &[u8], bin_name: &str, dest: &Path) -> Result<(), String
 
     let gz = GzDecoder::new(Cursor::new(data));
     let mut archive = Archive::new(gz);
-    for entry in archive.entries().map_err(|e| format!("archive open failed: {e}"))? {
+    for entry in archive
+        .entries()
+        .map_err(|e| format!("archive open failed: {e}"))?
+    {
         let mut entry = entry.map_err(|e| format!("archive read failed: {e}"))?;
         let path = entry
             .path()
@@ -494,8 +518,7 @@ fn extract_tar_gz(data: &[u8], bin_name: &str, dest: &Path) -> Result<(), String
                     .map_err(|e| format!("stat failed: {e}"))?
                     .permissions();
                 perms.set_mode(0o755);
-                std::fs::set_permissions(dest, perms)
-                    .map_err(|e| format!("chmod failed: {e}"))?;
+                std::fs::set_permissions(dest, perms).map_err(|e| format!("chmod failed: {e}"))?;
             }
             return Ok(());
         }

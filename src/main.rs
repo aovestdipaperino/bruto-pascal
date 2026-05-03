@@ -19,7 +19,10 @@ fn main() {
             let cfg = config::Config::load(&config_path);
             cfg.show_about_dialog_on_start
         } else {
-            let _ = config::Config { show_about_dialog_on_start: false }.save(&config_path);
+            let _ = config::Config {
+                show_about_dialog_on_start: false,
+            }
+            .save(&config_path);
             true
         };
 
@@ -29,7 +32,10 @@ fn main() {
             // wrote false above, so this only matters for that case.)
             let path = config_path.clone();
             Some(Box::new(move || {
-                let _ = config::Config { show_about_dialog_on_start: false }.save(&path);
+                let _ = config::Config {
+                    show_about_dialog_on_start: false,
+                }
+                .save(&path);
             }))
         } else {
             None
@@ -47,10 +53,9 @@ fn main() {
             })),
         };
 
-        if let Err(e) = bruto_ide::ide::run_with_options(
-            Box::new(bruto_pascal_lang::MiniPascal),
-            options,
-        ) {
+        if let Err(e) =
+            bruto_ide::ide::run_with_options(Box::new(bruto_pascal_lang::MiniPascal), options)
+        {
             eprintln!("IDE error: {e}");
             process::exit(1);
         }
@@ -127,8 +132,14 @@ fn compile_and_run(source_file: &str, output_file: Option<&str>, run_after: bool
     let exe_path = match output_file {
         Some(p) => p.to_string(),
         None => {
-            let stem = source_path.file_stem().unwrap_or_default().to_string_lossy();
-            let dir = source_path.parent().filter(|p| !p.as_os_str().is_empty()).unwrap_or(Path::new("."));
+            let stem = source_path
+                .file_stem()
+                .unwrap_or_default()
+                .to_string_lossy();
+            let dir = source_path
+                .parent()
+                .filter(|p| !p.as_os_str().is_empty())
+                .unwrap_or(Path::new("."));
             dir.join(stem.as_ref()).to_string_lossy().to_string()
         }
     };
@@ -144,8 +155,8 @@ fn compile_and_run(source_file: &str, output_file: Option<&str>, run_after: bool
     };
 
     // Codegen
-    let source_abs = std::fs::canonicalize(source_path)
-        .unwrap_or_else(|_| source_path.to_path_buf());
+    let source_abs =
+        std::fs::canonicalize(source_path).unwrap_or_else(|_| source_path.to_path_buf());
     let context = inkwell::context::Context::create();
     let mut codegen = bruto_pascal_lang::codegen::CodeGen::new(
         &context,

@@ -64,4 +64,6 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
-      - run: cargo fmt --all -- --check
+      # Scope to our own crates — turbo-vision-4-rust has unformatted
+      # example files that we don't own.
+      - run: cargo fmt -p bruto-pascal -p bruto-ide -p bruto-lang -p bruto-pascal-lang -- --check

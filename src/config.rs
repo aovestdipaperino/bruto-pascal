@@ -10,7 +10,9 @@ pub struct Config {
 
 impl Default for Config {
     fn default() -> Self {
-        Self { show_about_dialog_on_start: true }
+        Self {
+            show_about_dialog_on_start: true,
+        }
     }
 }
 
