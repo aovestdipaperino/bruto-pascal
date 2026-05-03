@@ -37,6 +37,10 @@ fn main() {
         let options = bruto_ide::ide::IdeOptions {
             show_about_on_start: show_about,
             on_about_shown,
+            about_text: Some(format!(
+                "Bruto Pascal {}\n\n(c) 2026 Enzo Lombardi",
+                env!("CARGO_PKG_VERSION"),
+            )),
         };
 
         if let Err(e) = bruto_ide::ide::run_with_options(
