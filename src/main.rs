@@ -10,9 +10,22 @@ fn main() {
     if args.len() < 2 {
         // No arguments — launch IDE
         let config_path = config::config_path();
-        let cfg = config::Config::load(&config_path);
 
-        let on_about_shown: Option<Box<dyn FnMut()>> = if cfg.show_about_dialog_on_start {
+        // First run = config file is missing. Write it eagerly with the flag
+        // already flipped to false, then show the About dialog this one time.
+        // Eager-write means even a crash during the dialog won't replay it.
+        let show_about = if config_path.exists() {
+            let cfg = config::Config::load(&config_path);
+            cfg.show_about_dialog_on_start
+        } else {
+            let _ = config::Config { show_about_dialog_on_start: false }.save(&config_path);
+            true
+        };
+
+        let on_about_shown: Option<Box<dyn FnMut()>> = if show_about && config_path.exists() {
+            // Pre-existing config that asked us to show: flip it to false now
+            // that the dialog has been shown. (The first-run path already
+            // wrote false above, so this only matters for that case.)
             let path = config_path.clone();
             Some(Box::new(move || {
                 let _ = config::Config { show_about_dialog_on_start: false }.save(&path);
@@ -22,7 +35,7 @@ fn main() {
         };
 
         let options = bruto_ide::ide::IdeOptions {
-            show_about_on_start: cfg.show_about_dialog_on_start,
+            show_about_on_start: show_about,
             on_about_shown,
         };
 
