@@ -22,12 +22,8 @@ jobs:
         include:
           - name: macOS
             runner: macos-14
-
-    # Linux is currently unsupported: bruto-pascal-lang's codegen emits
-    # references to __stdinp/__stdoutp/__stderrp (macOS-specific stdio
-    # symbols), so the linker fails on Linux. Once the codegen is made
-    # platform-portable, add `{ name: Linux, runner: ubuntu-latest }`
-    # back to the matrix and re-enable the apt LLVM install path.
+          - name: Linux
+            runner: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -39,9 +35,20 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Install LLVM 18 (macOS)
+        if: runner.os == 'macOS'
         run: |
           brew install llvm@18
           echo "LLVM_SYS_181_PREFIX=$(brew --prefix llvm@18)" >> "$GITHUB_ENV"
+
+      - name: Install LLVM 18 (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          UBUNTU_CODENAME=$(lsb_release -cs)
+          echo "deb https://apt.llvm.org/${UBUNTU_CODENAME}/ llvm-toolchain-${UBUNTU_CODENAME}-18 main" | sudo tee /etc/apt/sources.list.d/llvm.list
+          sudo apt-get update
+          sudo apt-get install -y llvm-18-dev libllvm18 clang-18 libclang-18-dev libpolly-18-dev
+          echo "LLVM_SYS_181_PREFIX=/usr/lib/llvm-18" >> "$GITHUB_ENV"
 
       - name: Run tests
         # --tests --lib limits cargo's compile set to library + integration

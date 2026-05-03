@@ -25,12 +25,15 @@ jobs:
             target: aarch64-apple-darwin
             bottle_tag: arm64_sonoma
             archive: tar.gz
-
-    # Linux targets are currently unsupported: bruto-pascal-lang's codegen
-    # emits references to __stdinp/__stdoutp/__stderrp (macOS-specific
-    # stdio symbols), so the linker fails on Linux. Restore the
-    # x86_64-linux and aarch64-linux matrix entries (and the apt LLVM
-    # install path) once the codegen is made platform-portable.
+          - name: x86_64-linux
+            runner: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            bottle_tag: x86_64_linux
+            archive: tar.gz
+          - name: aarch64-linux
+            runner: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            archive: tar.gz
 
     steps:
       - uses: actions/checkout@v4
@@ -42,9 +45,20 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Install LLVM 18 (macOS)
+        if: runner.os == 'macOS'
         run: |
           brew install llvm@18
           echo "LLVM_SYS_181_PREFIX=$(brew --prefix llvm@18)" >> "$GITHUB_ENV"
+
+      - name: Install LLVM 18 (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          UBUNTU_CODENAME=$(lsb_release -cs)
+          echo "deb https://apt.llvm.org/${UBUNTU_CODENAME}/ llvm-toolchain-${UBUNTU_CODENAME}-18 main" | sudo tee /etc/apt/sources.list.d/llvm.list
+          sudo apt-get update
+          sudo apt-get install -y llvm-18-dev libllvm18 clang-18 libclang-18-dev libpolly-18-dev
+          echo "LLVM_SYS_181_PREFIX=/usr/lib/llvm-18" >> "$GITHUB_ENV"
 
       - name: Build release binary
         run: cargo build --release --target ${{ matrix.target }}
@@ -140,6 +154,7 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           SOURCE_SHA="${{ steps.hashes.outputs.source_sha }}"
           ARM64_SONOMA_SHA="${{ steps.hashes.outputs.arm64_sonoma_sha }}"
+          X86_64_LINUX_SHA="${{ steps.hashes.outputs.x86_64_linux_sha }}"
 
           git clone "https://x-access-token:${TAP_GITHUB_TOKEN}@github.com/aovestdipaperino/homebrew-tap.git" tap
 
@@ -154,6 +169,7 @@ jobs:
             bottle do
               root_url "https://github.com/aovestdipaperino/bruto-pascal/releases/download/v${VERSION}"
               sha256 cellar: :any_skip_relocation, arm64_sonoma: "${ARM64_SONOMA_SHA}"
+              sha256 cellar: :any_skip_relocation, x86_64_linux: "${X86_64_LINUX_SHA}"
             end
 
             depends_on "llvm@18"
