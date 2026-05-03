@@ -53,7 +53,10 @@ jobs:
       - name: Run tests
         # Use --test-threads=1 — several debugger tests share /tmp paths and
         # collide under cargo's default parallel runner.
-        run: cargo test --workspace -- --test-threads=1
+        # --tests --lib limits cargo's compile set to library + integration
+        # tests; without it, turbo-vision-4-rust's `ssh_server` example
+        # gets compiled, which requires the `ssh` feature to be enabled.
+        run: cargo test --workspace --tests --lib -- --test-threads=1
 
   fmt:
     name: Format
