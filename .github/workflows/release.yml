@@ -4,6 +4,11 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to (re-)upload artifacts to. Leave blank to skip upload and brew/scoop updates."
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -80,34 +85,36 @@ jobs:
       - name: Get version
         id: version
         shell: bash
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${TAG#v}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Package binary (unix)
         if: matrix.archive == 'tar.gz'
         run: |
           cd target/${{ matrix.target }}/release
-          tar czf ../../../bruto-pascal-${{ github.ref_name }}-${{ matrix.name }}.tar.gz brutop
+          tar czf ../../../bruto-pascal-${{ (inputs.tag || github.ref_name) }}-${{ matrix.name }}.tar.gz brutop
           cd ../../..
 
       - name: Package binary (windows)
         if: matrix.archive == 'zip'
         shell: pwsh
         run: |
-          Compress-Archive -Path target/${{ matrix.target }}/release/brutop.exe -DestinationPath bruto-pascal-${{ github.ref_name }}-${{ matrix.name }}.zip
+          Compress-Archive -Path target/${{ matrix.target }}/release/brutop.exe -DestinationPath bruto-pascal-${{ (inputs.tag || github.ref_name) }}-${{ matrix.name }}.zip
 
       - name: Upload binary archive
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.tag != '')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
-        run: gh release upload ${{ github.ref_name }} bruto-pascal-${{ github.ref_name }}-${{ matrix.name }}.${{ matrix.archive }} --clobber
+        run: gh release upload ${{ (inputs.tag || github.ref_name) }} bruto-pascal-${{ (inputs.tag || github.ref_name) }}-${{ matrix.name }}.${{ matrix.archive }} --clobber
 
       # --- Homebrew bottle (only for platforms with bottle_tag) ---
 
       - name: Package Homebrew bottle
-        if: matrix.bottle_tag && github.event_name == 'release'
+        if: matrix.bottle_tag && (github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.tag != ''))
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           BOTTLE_TAG="${{ matrix.bottle_tag }}"
@@ -117,7 +124,7 @@ jobs:
           tar czf "bruto-pascal-${VERSION}.${BOTTLE_TAG}.bottle.tar.gz" bruto-pascal/
 
       - name: Upload bottle artifact
-        if: matrix.bottle_tag && github.event_name == 'release'
+        if: matrix.bottle_tag && (github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.tag != ''))
         uses: actions/upload-artifact@v4
         with:
           name: bottle-${{ matrix.bottle_tag }}
@@ -125,7 +132,7 @@ jobs:
 
   update-homebrew:
     name: Update Homebrew tap
-    if: github.event_name == 'release' && !github.event.release.prerelease && !cancelled()
+    if: (github.event_name == 'release' && !github.event.release.prerelease) || (github.event_name == 'workflow_dispatch' && inputs.tag != '') && !cancelled()
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -133,9 +140,12 @@ jobs:
 
       - name: Get version
         id: version
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${TAG#v}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Download bottle artifacts
         uses: actions/download-artifact@v4
@@ -146,14 +156,17 @@ jobs:
       - name: Upload bottles to release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.version.outputs.tag }}
         run: |
           for f in bottles/bruto-pascal-*.bottle.tar.gz; do
-            gh release upload "${GITHUB_REF_NAME}" "$f" --clobber
+            gh release upload "$TAG" "$f" --clobber
           done
 
       - name: Download source tarball
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
         run: |
-          curl -sL "https://github.com/${{ github.repository }}/archive/refs/tags/${GITHUB_REF_NAME}.tar.gz" -o "source.tar.gz"
+          curl -sL "https://github.com/${{ github.repository }}/archive/refs/tags/${TAG}.tar.gz" -o "source.tar.gz"
 
       - name: Compute SHA256 hashes
         id: hashes
@@ -216,7 +229,7 @@ jobs:
 
   update-scoop:
     name: Update Scoop bucket
-    if: github.event_name == 'release' && !github.event.release.prerelease && !cancelled()
+    if: (github.event_name == 'release' && !github.event.release.prerelease) || (github.event_name == 'workflow_dispatch' && inputs.tag != '') && !cancelled()
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -224,16 +237,17 @@ jobs:
         id: release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag || github.ref_name }}
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${TAG#v}"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
 
-          gh release download "${GITHUB_REF_NAME}" \
+          gh release download "${TAG}" \
             --repo "${{ github.repository }}" \
-            --pattern "bruto-pascal-${GITHUB_REF_NAME}-x86_64-windows.zip" \
+            --pattern "bruto-pascal-${TAG}-x86_64-windows.zip" \
             --dir .
-          SHA256=$(sha256sum "bruto-pascal-${GITHUB_REF_NAME}-x86_64-windows.zip" | cut -d' ' -f1)
+          SHA256=$(sha256sum "bruto-pascal-${TAG}-x86_64-windows.zip" | cut -d' ' -f1)
           echo "sha256_win64=${SHA256}" >> "$GITHUB_OUTPUT"
 
       - name: Update Scoop manifest
