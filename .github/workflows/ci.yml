@@ -24,6 +24,8 @@ jobs:
             runner: macos-14
           - name: Linux
             runner: ubuntu-latest
+          - name: Windows
+            runner: windows-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -49,6 +51,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y llvm-18-dev libllvm18 clang-18 libclang-18-dev libpolly-18-dev
           echo "LLVM_SYS_181_PREFIX=/usr/lib/llvm-18" >> "$GITHUB_ENV"
+
+      - name: Install LLVM 18 (Windows)
+        if: runner.os == 'Windows'
+        uses: KyleMayes/install-llvm-action@v2
+        with:
+          version: "18.1"
+
+      - name: Set LLVM env (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          echo "LLVM_SYS_181_PREFIX=$LLVM_PATH" >> "$GITHUB_ENV"
 
       - name: Run tests
         # --tests --lib limits cargo's compile set to library + integration
