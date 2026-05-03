@@ -47,14 +47,8 @@ jobs:
           UBUNTU_CODENAME=$(lsb_release -cs)
           echo "deb https://apt.llvm.org/${UBUNTU_CODENAME}/ llvm-toolchain-${UBUNTU_CODENAME}-18 main" | sudo tee /etc/apt/sources.list.d/llvm.list
           sudo apt-get update
-          sudo apt-get install -y \
-            llvm-18-dev libllvm18 clang-18 libclang-18-dev libpolly-18-dev \
-            lldb-18 llvm-18-tools
+          sudo apt-get install -y llvm-18-dev libllvm18 clang-18 libclang-18-dev libpolly-18-dev
           echo "LLVM_SYS_181_PREFIX=/usr/lib/llvm-18" >> "$GITHUB_ENV"
-          # The codegen invokes `lldb` and `dwarfdump` by their unsuffixed
-          # names; apt's llvm-18 packages drop versioned binaries only.
-          sudo ln -sf /usr/bin/lldb-18 /usr/local/bin/lldb
-          sudo ln -sf /usr/lib/llvm-18/bin/llvm-dwarfdump /usr/local/bin/dwarfdump
 
       - name: Run tests
         # --tests --lib limits cargo's compile set to library + integration
