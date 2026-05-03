@@ -63,7 +63,10 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          "LLVM_SYS_181_PREFIX=${{ steps.llvm_win.outputs.path }}" | Out-File -FilePath $env:GITHUB_ENV -Append
+          # install-llvm-action exports LLVM_PATH but its outputs schema
+          # has changed across major versions; reading the env var
+          # directly is the only path that's been stable.
+          "LLVM_SYS_181_PREFIX=$env:LLVM_PATH" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Run tests
         # --tests --lib limits cargo's compile set to library + integration
