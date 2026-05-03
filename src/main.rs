@@ -187,10 +187,10 @@ fn print_usage() {
     eprintln!("Bruto Pascal Compiler");
     eprintln!();
     eprintln!("Usage:");
-    eprintln!("  bruto-pascal                     Launch IDE");
-    eprintln!("  bruto-pascal <file.pas>           Compile to executable");
-    eprintln!("  bruto-pascal -r <file.pas>        Compile and run");
-    eprintln!("  bruto-pascal -o <out> <file.pas>  Compile to specific output path");
+    eprintln!("  brutop                     Launch IDE");
+    eprintln!("  brutop <file.pas>           Compile to executable");
+    eprintln!("  brutop -r <file.pas>        Compile and run");
+    eprintln!("  brutop -o <out> <file.pas>  Compile to specific output path");
     eprintln!();
     eprintln!("Options:");
     eprintln!("  -r, --run       Compile and run immediately");

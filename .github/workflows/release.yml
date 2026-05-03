@@ -73,7 +73,7 @@ jobs:
       - name: Package binary
         run: |
           cd target/${{ matrix.target }}/release
-          tar czf ../../../bruto-pascal-${{ github.ref_name }}-${{ matrix.name }}.tar.gz bruto-pascal
+          tar czf ../../../bruto-pascal-${{ github.ref_name }}-${{ matrix.name }}.tar.gz brutop
           cd ../../..
 
       - name: Upload binary archive
@@ -91,8 +91,8 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           BOTTLE_TAG="${{ matrix.bottle_tag }}"
           mkdir -p bruto-pascal/${VERSION}/bin
-          cp target/${{ matrix.target }}/release/bruto-pascal bruto-pascal/${VERSION}/bin/bruto-pascal
-          chmod +x bruto-pascal/${VERSION}/bin/bruto-pascal
+          cp target/${{ matrix.target }}/release/brutop bruto-pascal/${VERSION}/bin/brutop
+          chmod +x bruto-pascal/${VERSION}/bin/brutop
           tar czf "bruto-pascal-${VERSION}.${BOTTLE_TAG}.bottle.tar.gz" bruto-pascal/
 
       - name: Upload bottle artifact
@@ -181,7 +181,7 @@ jobs:
             end
 
             test do
-              system "#{bin}/bruto-pascal", "--help"
+              system "#{bin}/brutop", "--help"
             end
           end
           EOF
