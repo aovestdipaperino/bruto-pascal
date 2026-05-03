@@ -34,8 +34,10 @@ jobs:
             runner: ubuntu-24.04-arm
             target: aarch64-unknown-linux-gnu
             archive: tar.gz
-
-    # Windows deliberately not included — see ci.yml for the reason.
+          - name: x86_64-windows
+            runner: windows-latest
+            target: x86_64-pc-windows-msvc
+            archive: zip
 
     steps:
       - uses: actions/checkout@v4
@@ -62,6 +64,16 @@ jobs:
           sudo apt-get install -y llvm-18-dev libllvm18 clang-18 libclang-18-dev libpolly-18-dev
           echo "LLVM_SYS_181_PREFIX=/usr/lib/llvm-18" >> "$GITHUB_ENV"
 
+      - name: Install LLVM 18 (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $url = "https://github.com/c3lang/win-llvm/releases/download/llvm_18_1_8_with_rt/llvm-18.1.8-windows-amd64-msvc17-msvcrt.7z"
+          curl.exe -sL -o llvm.7z $url
+          7z x llvm.7z -oC:\LLVM | Out-Null
+          $prefix = (Get-ChildItem C:\LLVM -Directory | Select-Object -First 1).FullName
+          "LLVM_SYS_181_PREFIX=$prefix" | Out-File -FilePath $env:GITHUB_ENV -Append
+
       - name: Build release binary
         run: cargo build --release --target ${{ matrix.target }}
 
@@ -72,11 +84,18 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Package binary
+      - name: Package binary (unix)
+        if: matrix.archive == 'tar.gz'
         run: |
           cd target/${{ matrix.target }}/release
           tar czf ../../../bruto-pascal-${{ github.ref_name }}-${{ matrix.name }}.tar.gz brutop
           cd ../../..
+
+      - name: Package binary (windows)
+        if: matrix.archive == 'zip'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path target/${{ matrix.target }}/release/brutop.exe -DestinationPath bruto-pascal-${{ github.ref_name }}-${{ matrix.name }}.zip
 
       - name: Upload binary archive
         if: github.event_name == 'release'
@@ -195,7 +214,68 @@ jobs:
           git diff --cached --quiet || git commit -m "bruto-pascal ${VERSION}"
           git push
 
-  # update-scoop is intentionally absent: depends on a Windows release
-  # artifact, which we don't ship until llvm-sys can build on Windows
-  # CI runners (needs llvm-config.exe, missing from the official LLVM
-  # Windows binaries).
+  update-scoop:
+    name: Update Scoop bucket
+    if: github.event_name == 'release' && !github.event.release.prerelease && !cancelled()
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get release info
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+
+          gh release download "${GITHUB_REF_NAME}" \
+            --repo "${{ github.repository }}" \
+            --pattern "bruto-pascal-${GITHUB_REF_NAME}-x86_64-windows.zip" \
+            --dir .
+          SHA256=$(sha256sum "bruto-pascal-${GITHUB_REF_NAME}-x86_64-windows.zip" | cut -d' ' -f1)
+          echo "sha256_win64=${SHA256}" >> "$GITHUB_OUTPUT"
+
+      - name: Update Scoop manifest
+        env:
+          SCOOP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.release.outputs.version }}"
+          TAG="${{ steps.release.outputs.tag }}"
+          SHA256="${{ steps.release.outputs.sha256_win64 }}"
+
+          cat > brutop.json << EOF
+          {
+            "version": "${VERSION}",
+            "description": "TUI-based Mini-Pascal IDE with LLVM-backed compiler and lldb debugger",
+            "homepage": "https://github.com/aovestdipaperino/bruto-pascal",
+            "license": "MIT",
+            "architecture": {
+              "64bit": {
+                "url": "https://github.com/aovestdipaperino/bruto-pascal/releases/download/${TAG}/bruto-pascal-${TAG}-x86_64-windows.zip",
+                "hash": "${SHA256}"
+              }
+            },
+            "bin": "brutop.exe",
+            "checkver": {
+              "github": "https://github.com/aovestdipaperino/bruto-pascal"
+            },
+            "autoupdate": {
+              "architecture": {
+                "64bit": {
+                  "url": "https://github.com/aovestdipaperino/bruto-pascal/releases/download/v\$version/bruto-pascal-v\$version-x86_64-windows.zip"
+                }
+              }
+            }
+          }
+          EOF
+
+          git clone "https://x-access-token:${SCOOP_GITHUB_TOKEN}@github.com/aovestdipaperino/scoop-tokensave.git" scoop-repo
+          cd scoop-repo
+          mkdir -p bucket
+          cp ../brutop.json bucket/brutop.json
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add bucket/brutop.json
+          git diff --cached --quiet || git commit -m "brutop ${VERSION}"
+          git push
