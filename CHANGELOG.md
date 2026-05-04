@@ -6,6 +6,36 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Call Stack window.** New `Windows → Call Stack` entry that opens a
+  panel listing the current `bt` frames during debugging. Hidden by
+  default; survives close/re-open like the Watches and Output panels.
+  The debugger now sends `bt` after every stop and parses
+  `frame #N: ...` lines into a new `DebugEvent::Frames` variant.
+  Clicking a frame focuses the editor showing that source file (matched
+  by basename), scrolls to the frame's line, and moves the green
+  "current statement" bar to that line. The bar follows a new
+  `exec_editor` override so it can land in a unit file when the picked
+  frame isn't in the main program; the next stop / step / continue
+  resets it back to the actual debug target. The currently selected
+  frame is also highlighted in the panel with the same green
+  background as the editor's current-line bar. Frames without a
+  parseable `at file:line` (e.g. `dyld\`start + 1234`) are filtered at
+  the parser so the panel only ever shows actionable rows.
+
+### Fixed
+- Green "current statement" bar showing on the caller line when a
+  breakpoint hit inside a procedure / function. After every stop the
+  IDE now requests `bt`, whose response echoes another
+  `* thread #1 ... stop reason = ...` header plus every frame in the
+  stack; the buggy `parse_stop_location` heuristic walked accumulated
+  lldb output and grabbed the most recent `at file:line` it saw —
+  which after `bt` was `frame #1` (the caller in `main`). Stop
+  detection now only fires when the debugger was Running at poll
+  entry, and only inspects the current line for an inline location
+  instead of mining history. Step-over / step-into now also flip the
+  state back to Running so the next stop is recognised as fresh.
+
 ## [1.0.1] — 2026-05-03
 
 ### Added
