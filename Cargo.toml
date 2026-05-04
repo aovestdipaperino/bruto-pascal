@@ -7,29 +7,57 @@ version = "1.0.2"
 edition = "2024"
 authors = ["Enzo Lombardi <enzinol@gmail.com>"]
 repository = "https://github.com/aovestdipaperino/bruto-pascal"
+description = "A TUI Mini-Pascal IDE with LLVM-based codegen and an integrated lldb debugger"
+license = "MIT"
+readme = "README.md"
+keywords = ["pascal", "ide", "tui", "llvm", "compiler"]
+categories = ["development-tools", "command-line-utilities"]
+exclude = [
+    "tp7 screenshots/*",
+    "demo/*",
+    "demo-units/*",
+    "data/*",
+    "docs/*",
+    "local-only/*",
+    "long-demo*",
+    "demo*",
+    "SAMPLE*",
+    "delete-me*",
+    "*.dSYM",
+    "*.bruto-meta",
+    ".DS_Store",
+]
 
 [[bin]]
 name = "brutop"
 path = "src/main.rs"
 
+# Path deps carry version pins so `cargo publish` substitutes the
+# crates.io registry version on the published crate. Local builds use
+# the path; published crates use the version. The crates-io patch
+# below makes sure local builds of any leaf that consumes one of
+# these via the registry path still resolves to our local copy.
 [dependencies]
-bruto-ide = { path = "bruto-ide" }
-bruto-lang = { path = "bruto-lang" }
-bruto-pascal-lang = { path = "bruto-pascal-lang" }
+bruto-ide = { version = "1.0.2", path = "bruto-ide" }
+bruto-lang = { version = "1.0.2", path = "bruto-lang" }
+bruto-pascal-lang = { version = "1.0.2", path = "bruto-pascal-lang" }
 flate2 = "1"
 inkwell = { version = "0.8.0", features = ["llvm18-1"] }
 self-replace = "1"
 serde = { version = "1", features = ["derive"] }
 tar = "0.4"
 toml = "0.8"
-turbo-vision = { path = "turbo-vision-4-rust" }
+turbo-vision = { version = "1.2", path = "turbo-vision-4-rust" }
 ureq = { version = "3", features = ["json"] }
 
-[patch."https://github.com/aovestdipaperino/turbo-vision-4-rust.git"]
+# Redirect every workspace-local crate to its on-disk copy during
+# development; the parent's path deps already pick this up directly,
+# but the leaf crates declare their inter-deps as plain crates.io
+# entries (`bruto-lang = "1.0.2"`) so they can publish — those need
+# patching here so a local `cargo build` doesn't try to download the
+# registry version.
+[patch.crates-io]
 turbo-vision = { path = "turbo-vision-4-rust" }
-
-[patch."https://github.com/aovestdipaperino/bruto-ide.git"]
 bruto-ide = { path = "bruto-ide" }
-
-[patch."https://github.com/aovestdipaperino/bruto-lang.git"]
 bruto-lang = { path = "bruto-lang" }
+bruto-pascal-lang = { path = "bruto-pascal-lang" }
