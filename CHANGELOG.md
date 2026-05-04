@@ -6,7 +6,16 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.2] — 2026-05-04
+
 ### Fixed
+- **StatusLine hint now actually shows when the message is long.**
+  Rendering was gated on `x + hint.len() + 2 < width`, so on a typical
+  80-column terminal — where the existing items already use ~56
+  columns — anything longer than ~22 characters was silently
+  suppressed (this is why the compile-error message wasn't appearing
+  in the status bar). Now renders as many characters as fit and
+  appends an ellipsis when truncated.
 - **Undo / Redo menu enablement now follows the actual stack state.**
   Previously both entries were enabled whenever an editor had focus;
   they're now greyed out at the ends of the history (clean buffer →
@@ -30,6 +39,16 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   already atomic (single `DeleteText`); copy doesn't touch the buffer.
 
 ### Added
+- **Compile-error feedback.** When a build fails the IDE now (a) pops
+  a modal error dialog with the full message at the end of
+  compilation, (b) paints a red bar across the offending editor row,
+  and (c) surfaces a compact `<line>:<col>: <message>` in the status
+  bar whenever the caret sits on that line. The status hint strips
+  the noisy `Parse error: line ` prefix and no longer renders a
+  leading `- ` separator, so the row reads cleanly. The gutter stays
+  exclusively for breakpoints. Cleared at the start of every new
+  build; linker / dsymutil errors that don't carry a line number
+  still get the dialog but no bar.
 - **Edit menu.** New `Edit` submenu with Undo (Ctrl+Z), Redo (Ctrl+Y),
   Cut (Ctrl+X), Copy (Ctrl+C), Paste (Ctrl+V), and Select All (Ctrl+A).
   The keyboard shortcuts already worked because the underlying editor
