@@ -6,7 +6,39 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- **Undo / Redo menu enablement now follows the actual stack state.**
+  Previously both entries were enabled whenever an editor had focus;
+  they're now greyed out at the ends of the history (clean buffer →
+  Undo greys; mid-history with no recent edit → Redo greys; any fresh
+  edit clears the redo stack and greys Redo immediately). Added
+  `can_undo()` / `can_redo()` methods to the `Editor` trait so any
+  implementation can opt in.
+- **Alt+X now actually quits the IDE.** The File → Exit menu entry and
+  the Alt-X status item were both registered with `0x012D` — a stale
+  Borland-era scancode — while turbo-vision's crossterm bridge emits
+  `KB_ALT_X = 0x2D00` for the real key event, so the status-line
+  shortcut comparison never matched. Switched both registrations to
+  the actual `KB_ALT_X` constant.
+- **Paste over a selection now undoes / redoes in a single step.** The
+  underlying `EditorWindow::clip_paste` used to push two separate undo
+  entries — `delete_selection()` then `insert_text()` — so a single
+  Ctrl+Z only un-inserted the new text and left the original selection
+  still gone. Introduced an `EditAction::Compound(Vec<EditAction>)`
+  variant; `clip_paste` now bypasses the helper push paths and emits
+  one compound entry covering both the delete and the insert. Cut was
+  already atomic (single `DeleteText`); copy doesn't touch the buffer.
+
 ### Added
+- **Edit menu.** New `Edit` submenu with Undo (Ctrl+Z), Redo (Ctrl+Y),
+  Cut (Ctrl+X), Copy (Ctrl+C), Paste (Ctrl+V), and Select All (Ctrl+A).
+  The keyboard shortcuts already worked because the underlying editor
+  view captures them directly; the menu adds a visible affordance and
+  routes its commands through the same trait. Cut/Copy grey out when
+  there's no selection. The clipboard / undo / select-all operations
+  now live on the `Editor` trait in `turbo-vision` so any editor
+  implementation must support them; default impls are no-ops for
+  non-text editors.
 - **Call Stack window.** New `Windows → Call Stack` entry that opens a
   panel listing the current `bt` frames during debugging. Hidden by
   default; survives close/re-open like the Watches and Output panels.
