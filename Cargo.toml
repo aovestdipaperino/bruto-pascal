@@ -47,7 +47,7 @@ self-replace = "1"
 serde = { version = "1", features = ["derive"] }
 tar = "0.4"
 toml = "0.8"
-turbo-vision = { version = "1.2", path = "turbo-vision-4-rust" }
+turbo-vision = { version = "1.3", path = "turbo-vision-4-rust" }
 ureq = { version = "3", features = ["json"] }
 
 # Redirect every workspace-local crate to its on-disk copy during
