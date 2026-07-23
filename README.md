@@ -1,5 +1,10 @@
 # Bruto Pascal
 
+<p align="center">
+  <a href="https://ai.enzolombardi.net/"><img src="https://img.shields.io/badge/built%20with-AI-D97757?style=flat-square&labelColor=101010&logo=anthropic&logoColor=white" alt="Built with AI — part of Enzo Lombardi's AI portfolio"></a>
+</p>
+
+
 A TUI-based Mini-Pascal IDE and compiler. The IDE side is built with
 [bruto-ide](https://github.com/aovestdipaperino/bruto-ide); the language side
 with [bruto-pascal-lang](https://github.com/aovestdipaperino/bruto-pascal-lang).
