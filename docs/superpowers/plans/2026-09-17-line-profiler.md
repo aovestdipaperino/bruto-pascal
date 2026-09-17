@@ -852,7 +852,9 @@ Append to the `tests` module at the bottom of `bruto-pascal-lang/src/lib.rs`:
         (cg.print_ir(), cg.prof_map_lines().to_vec())
     }
 
-    const PROF_SRC: &str = "program P;\nvar i: integer;\nprocedure Q;\nbegin\n  i := i + 1\nend;\nbegin\n  i := 0;\n  Q\nend.\n";
+    // Globals are passed by `var` parameter: top-level procedures cannot
+    // reference globals directly in the current codegen (pre-existing).
+    const PROF_SRC: &str = "program P;\nvar i: integer;\nprocedure Q(var n: integer);\nbegin\n  n := n + 1\nend;\nbegin\n  i := 0;\n  Q(i)\nend.\n";
 
     #[test]
     fn instrumented_ir_has_hooks_and_map() {
@@ -1047,7 +1049,7 @@ In `compile_statement`, wrap the existing `match` so every statement is counted.
 - [ ] **Step 5: Run tests to verify they pass**
 
 Run: `LLVM_SYS_181_PREFIX=/opt/homebrew/opt/llvm@18 cargo test -p bruto-pascal-lang -- --test-threads=1 2>&1 | grep -E "^test result|FAILED|panicked"`
-Expected: all pass, including `instrumented_ir_has_hooks_and_map` and `uninstrumented_ir_is_clean`; the existing 62 tests still pass (the uninstrumented path is unchanged). `PROF_SRC` has exactly three statements (`i := i + 1`, `i := 0`, `Q`) and no compound statements, so the `L` count is exactly 3.
+Expected: all pass, including `instrumented_ir_has_hooks_and_map` and `uninstrumented_ir_is_clean`; the existing 62 tests still pass (the uninstrumented path is unchanged). `PROF_SRC` has exactly three statements (`n := n + 1`, `i := 0`, `Q(i)`) and no compound statements, so the `L` count is exactly 3.
 
 - [ ] **Step 6: Commit**
 
@@ -1079,7 +1081,9 @@ Append to the tests module in `bruto-pascal-lang/src/lib.rs`:
     #[test]
     fn profile_build_and_run() {
         use bruto_lang::profile::ProfileKind;
-        let src = "program Hot;\nvar i, acc: integer;\nprocedure Work;\nvar k: integer;\nbegin\n  for k := 1 to 2000 do\n    acc := acc + k\nend;\nbegin\n  acc := 0;\n  for i := 1 to 50 do\n    Work;\n  writeln(acc)\nend.\n";
+        // `acc` is passed by `var`: top-level procedures cannot reference
+        // globals directly in the current codegen (pre-existing limitation).
+        let src = "program Hot;\nvar i, acc: integer;\nprocedure Work(var a: integer);\nvar k: integer;\nbegin\n  for k := 1 to 2000 do\n    a := a + k\nend;\nbegin\n  acc := 0;\n  for i := 1 to 50 do\n    Work(acc);\n  writeln(acc)\nend.\n";
         let lang = MiniPascal;
         let mut job = lang.profile_job_at(src, None);
         let result = loop {
