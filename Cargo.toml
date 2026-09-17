@@ -1,5 +1,6 @@
 [workspace]
 members = [".", "bruto-lang", "bruto-ide", "bruto-pascal-lang"]
+exclude = ["turbo-vision-4-rust"]
 
 [package]
 name = "bruto-pascal"
@@ -47,7 +48,7 @@ self-replace = "1"
 serde = { version = "1", features = ["derive"] }
 tar = "0.4"
 toml = "0.8"
-turbo-vision = { version = "1.3", path = "turbo-vision-4-rust" }
+turbo-vision = "3.0"
 ureq = { version = "3", features = ["json"] }
 
 # Redirect every workspace-local crate to its on-disk copy during
@@ -57,7 +58,6 @@ ureq = { version = "3", features = ["json"] }
 # patching here so a local `cargo build` doesn't try to download the
 # registry version.
 [patch.crates-io]
-turbo-vision = { path = "turbo-vision-4-rust" }
 bruto-ide = { path = "bruto-ide" }
 bruto-lang = { path = "bruto-lang" }
 bruto-pascal-lang = { path = "bruto-pascal-lang" }

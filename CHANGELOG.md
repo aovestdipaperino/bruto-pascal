@@ -6,6 +6,21 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- **Upgraded to turbo-vision 3.0.0.** The IDE now consumes the crates.io
+  release directly (the `turbo-vision-4-rust` submodule is kept at the
+  `v3.0.0` tag for reference and excluded from the workspace, since 3.0
+  turned that repo into its own Cargo workspace). Every custom view
+  (`BreakpointGutter`, `WatchPanel`, `CallStackPanel`, the build progress
+  label) moved its base fields into a `ViewCore` and draws in
+  owner-relative coordinates; `IdeEditorWindow` and `OutputPanel` are now
+  `WindowLike` types generated through `impl_view_for_window!`, and the
+  hand-written `SharedX` newtypes were replaced by the library's
+  `Shared<T>`. Typed flags (`State::SHADOW`, `MsgBox::YES_BUTTON`),
+  `MenuItemBuilder` / `StatusItemBuilder`, `Handle<InputLine>` for the
+  value editor, and `Application::execute_modal` for the build progress
+  dialog replace the removed 2.x APIs. Layout and behaviour are unchanged.
+
 ## [1.0.2] — 2026-05-04
 
 ### Fixed
