@@ -16,6 +16,10 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   edit. Normal builds are unaffected.
 
 ### Changed
+- **turbo-vision 3.0.1.** Picks up the fix for editor, memo and text viewer
+  content areas: with the breakpoint gutter (and now the profile column)
+  beside the editor, text and mouse hits were shifted right by the editor's
+  own x offset. Cursor placement by mouse is correct again.
 - **Upgraded to turbo-vision 3.0.0.** The IDE now consumes the crates.io
   release directly (the `turbo-vision-4-rust` submodule is kept at the
   `v3.0.0` tag for reference and excluded from the workspace, since 3.0
