@@ -75,6 +75,7 @@ name = "bruto-ide"
 version = "1.0.2"
 dependencies = [
  "bruto-lang",
+ "crossterm",
  "turbo-vision",
 ]
 

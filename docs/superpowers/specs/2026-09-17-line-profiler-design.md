@@ -67,10 +67,14 @@ Time source: `clock_gettime(CLOCK_MONOTONIC)` on Unix,
 Attribution rules match `line-profiler`: a line's self time runs from its hook
 to the next hook in the same frame, minus time spent in routines entered in
 between; a routine's total time runs from enter to exit and its self time is
-total minus children totals.
+total minus children totals. Loop headers are hooked once per statement, not
+per iteration, so iteration overhead is charged to the last body statement.
 
-An `atexit` handler writes the file. Codegen already installs `atexit` style
-teardown for the console capture, so the same path is used.
+An `atexit` handler writes the file. The program writes `<exe>.bruto-prof` by
+default (the path is baked in by codegen via `__bruto_prof_set_output`, called
+right after the program's enter hook); `BRUTO_PROF_OUT` overrides it at
+runtime. Codegen already installs `atexit` style teardown for the console
+capture, so the same path is used.
 
 ### Profile file
 

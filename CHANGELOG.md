@@ -6,6 +6,15 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Line profiler.** `Build > Profile` (Shift-F9) compiles the program with
+  timing hooks on every routine and statement, links a small C runtime,
+  runs it, and shows the results two ways: a percentage column with heat
+  tinting beside the gutter, and a Profile window with a collapsible
+  routine > line call tree (Enter or double-click jumps to the line). The
+  column appears only after a profile run and clears on the next build or
+  edit. Normal builds are unaffected.
+
 ### Changed
 - **Upgraded to turbo-vision 3.0.0.** The IDE now consumes the crates.io
   release directly (the `turbo-vision-4-rust` submodule is kept at the
