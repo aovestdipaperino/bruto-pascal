@@ -7,6 +7,30 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Build options.** `Build > Options...` opens a dialog to choose
+  **Debug** (DWARF debug info, unoptimized) or **Retail** (no debug info,
+  optimized), and for Retail whether to optimize for **Size**, **Both**
+  (balanced, default) or **Speed** (LLVM `Os` / `O2` / `O3`). The choice
+  is saved under `[build]` in `config.toml` and used by Build and Run;
+  Debug sessions always build in Debug mode so lldb has symbols. The
+  command line gains matching `--debug`, `--retail` and
+  `--optimize size|both|speed` flags.
+- **Disassembly window.** `Windows > Disassembly` (only enabled once the
+  current source has been built successfully) shows the build's
+  assembly listing in a grey window (like Watches / Call Stack). Debug
+  builds carry DWARF `.loc` mappings back to Pascal source lines: clicking
+  an instruction scrolls the source editor there, and clicking its left
+  margin toggles a breakpoint on that line — the same breakpoint state as
+  the editor's own gutter, so it takes effect immediately in a running
+  debug session. Retail builds show the listing with a notice that there's
+  no source mapping (debug info is stripped before assembly is emitted),
+  so neither click does anything.
+- **Source-to-assembly correlation.** Double-clicking a line in the source
+  editor highlights it in cyan and scrolls the Disassembly window to the
+  matching instructions, also highlighted in cyan. Independent of the
+  debugger's green "current statement" highlight and the breakpoint
+  margin, so all three can be visible at once without being confused for
+  each other. Cleared at the start of the next build.
 - **Line profiler.** `Build > Profile` (Shift-F9) compiles the program with
   timing hooks on every routine and statement, links a small C runtime,
   runs it, and shows the results two ways: a percentage column with heat

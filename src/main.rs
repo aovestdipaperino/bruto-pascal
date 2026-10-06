@@ -15,14 +15,13 @@ fn main() {
         // First run = config file is missing. Write it eagerly with the flag
         // already flipped to false, then show the About dialog this one time.
         // Eager-write means even a crash during the dialog won't replay it.
+        let cfg = config::Config::load(&config_path);
         let show_about = if config_path.exists() {
-            let cfg = config::Config::load(&config_path);
             cfg.show_about_dialog_on_start
         } else {
-            let _ = config::Config {
-                show_about_dialog_on_start: false,
-            }
-            .save(&config_path);
+            let _ = config::Config::update(&config_path, |c| {
+                c.show_about_dialog_on_start = false;
+            });
             true
         };
 
@@ -32,10 +31,9 @@ fn main() {
             // wrote false above, so this only matters for that case.)
             let path = config_path.clone();
             Some(Box::new(move || {
-                let _ = config::Config {
-                    show_about_dialog_on_start: false,
-                }
-                .save(&path);
+                let _ = config::Config::update(&path, |c| {
+                    c.show_about_dialog_on_start = false;
+                });
             }))
         } else {
             None
@@ -50,6 +48,12 @@ fn main() {
             )),
             on_desktop_ready: Some(Box::new(|app| {
                 update::check_and_prompt(app);
+            })),
+            build_options: cfg.build.to_options(),
+            on_build_options_changed: Some(Box::new(move |opts| {
+                let _ = config::Config::update(&config_path, |c| {
+                    c.build = config::BuildConfig::from(opts);
+                });
             })),
         };
 
@@ -66,6 +70,7 @@ fn main() {
     let mut run_after = false;
     let mut source_file = None;
     let mut output_file = None;
+    let mut build_options = bruto_lang::language::BuildOptions::default();
 
     let mut i = 1;
     while i < args.len() {
@@ -78,6 +83,23 @@ fn main() {
                     process::exit(1);
                 }
                 output_file = Some(args[i].clone());
+            }
+            "--debug" => build_options.profile = bruto_lang::language::BuildProfile::Debug,
+            "--retail" | "--release" => {
+                build_options.profile = bruto_lang::language::BuildProfile::Retail
+            }
+            "--optimize" => {
+                i += 1;
+                let goal = args
+                    .get(i)
+                    .and_then(|a| bruto_lang::language::OptimizeFor::parse(a));
+                match goal {
+                    Some(g) => build_options.optimize = g,
+                    None => {
+                        eprintln!("error: --optimize requires size, both or speed");
+                        process::exit(1);
+                    }
+                }
             }
             "-h" | "--help" => {
                 print_usage();
@@ -109,11 +131,21 @@ fn main() {
     };
 
     // Compile
-    let code = compile_and_run(&source_file, output_file.as_deref(), run_after);
+    let code = compile_and_run(
+        &source_file,
+        output_file.as_deref(),
+        run_after,
+        build_options,
+    );
     process::exit(code);
 }
 
-fn compile_and_run(source_file: &str, output_file: Option<&str>, run_after: bool) -> i32 {
+fn compile_and_run(
+    source_file: &str,
+    output_file: Option<&str>,
+    run_after: bool,
+    build_options: bruto_lang::language::BuildOptions,
+) -> i32 {
     let source_path = Path::new(source_file);
     if !source_path.exists() {
         eprintln!("error: file not found: {source_file}");
@@ -180,6 +212,7 @@ fn compile_and_run(source_file: &str, output_file: Option<&str>, run_after: bool
         source_abs.to_str().unwrap_or(source_file),
     );
     codegen.set_directives(parser.directives);
+    codegen.set_build_options(build_options);
     if let Err(e) = codegen.compile(&program) {
         eprintln!("{source_file}:{e}");
         return 1;
@@ -192,7 +225,10 @@ fn compile_and_run(source_file: &str, output_file: Option<&str>, run_after: bool
     }
     let _ = codegen.write_metadata(&exe_path);
 
-    eprintln!("Compiled: {source_file} -> {exe_path}");
+    eprintln!(
+        "Compiled ({}): {source_file} -> {exe_path}",
+        build_options.describe()
+    );
 
     // Run if requested
     if run_after {
@@ -227,5 +263,8 @@ fn print_usage() {
     eprintln!("Options:");
     eprintln!("  -r, --run       Compile and run immediately");
     eprintln!("  -o, --output    Specify output executable path");
+    eprintln!("  --debug         Debug build with DWARF info, unoptimized (default)");
+    eprintln!("  --retail        Optimized build without debug info");
+    eprintln!("  --optimize <g>  Retail optimization goal: size, both (default), speed");
     eprintln!("  -h, --help      Show this help");
 }
