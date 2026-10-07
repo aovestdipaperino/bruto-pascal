@@ -31,7 +31,7 @@ jobs:
             bottle_tag: arm64_sonoma
             archive: tar.gz
           - name: x86_64-linux
-            runner: ubuntu-latest
+            runner: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
             bottle_tag: x86_64_linux
             archive: tar.gz
@@ -62,11 +62,12 @@ jobs:
       - name: Install LLVM 18 (Linux)
         if: runner.os == 'Linux'
         run: |
-          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-          UBUNTU_CODENAME=$(lsb_release -cs)
-          echo "deb https://apt.llvm.org/${UBUNTU_CODENAME}/ llvm-toolchain-${UBUNTU_CODENAME}-18 main" | sudo tee /etc/apt/sources.list.d/llvm.list
+          # Install from the Ubuntu 24.04 (noble) repositories, which ship
+          # LLVM 18.1.x on both x86_64 and arm64. Do NOT add apt.llvm.org:
+          # its snapshot `llvm-18-dev` conflicts with the distro's
+          # `libllvm18` (`Breaks:`), which fails on the arm64 runner.
           sudo apt-get update
-          sudo apt-get install -y llvm-18-dev libllvm18 clang-18 libclang-18-dev libpolly-18-dev
+          sudo apt-get install -y llvm-18-dev libclang-18-dev clang-18 libpolly-18-dev
           echo "LLVM_SYS_181_PREFIX=/usr/lib/llvm-18" >> "$GITHUB_ENV"
 
       - name: Install LLVM 18 (Windows)
