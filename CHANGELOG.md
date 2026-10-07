@@ -4,7 +4,7 @@ All notable changes to **bruto-pascal** are documented here. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.0.3] — 2026-10-07
 
 ### Added
 - **Build options.** `Build > Options...` opens a dialog to choose
@@ -25,12 +25,23 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   debug session. Retail builds show the listing with a notice that there's
   no source mapping (debug info is stripped before assembly is emitted),
   so neither click does anything.
+  The listing is laid out for reading rather than shown raw: assembler
+  bookkeeping (CFI, alignment, visibility directives, debug-only labels
+  and the DWARF sections) is hidden, each function starts after a blank
+  row with its name flush left, branch targets are indented, and
+  instructions line up in mnemonic / operands / comment columns with
+  syntax colours. Whenever the mapped Pascal line changes, that line's
+  source text is shown above the instructions it produced, Turbo Debugger
+  style; those rows are clickable like instructions.
 - **Source-to-assembly correlation.** Double-clicking a line in the source
   editor highlights it in cyan and scrolls the Disassembly window to the
   matching instructions, also highlighted in cyan. Independent of the
   debugger's green "current statement" highlight and the breakpoint
   margin, so all three can be visible at once without being confused for
   each other. Cleared at the start of the next build.
+  Clicking a row in the Profile window gives its line the same cyan
+  highlight in the editor (scrolled into view, focus stays on Profile)
+  and in the Disassembly window.
 - **Line profiler.** `Build > Profile` (Shift-F9) compiles the program with
   timing hooks on every routine and statement, links a small C runtime,
   runs it, and shows the results two ways: a percentage column with heat
@@ -38,12 +49,28 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   routine > line call tree (Enter or double-click jumps to the line). The
   column appears only after a profile run and clears on the next build or
   edit. Normal builds are unaffected.
+- **Tool windows resize their content.** Watches, Call Stack, Profile and
+  Disassembly now stretch their contents when the window is zoomed or
+  resized, instead of leaving the extra area blank.
+
+- **Hidden files in file dialogs.** Open and Save As no longer list
+  dot-folders and dot-files (`.git`, `.env`, ...); a "Show hidden"
+  checkbox beside the Files label brings them back while browsing. The
+  checkbox is embedded (drawn on the dialog background, not a cyan box).
+- **Code obfuscation.** `Build > Options...` gains an "Obfuscate code"
+  checkbox. When on, the build renames every user-defined identifier to a
+  meaningless name (consistently, so the program still runs) and inserts
+  opaque, always-true predicates with dead bogus blocks to obscure the
+  control-flow graph. The bogus instructions carry a line-0 debug
+  location, so a Debug build's disassembly stays aligned to the real
+  Pascal lines. Applies to any build profile.
 
 ### Changed
-- **turbo-vision 3.0.1.** Picks up the fix for editor, memo and text viewer
-  content areas: with the breakpoint gutter (and now the profile column)
-  beside the editor, text and mouse hits were shifted right by the editor's
-  own x offset. Cursor placement by mouse is correct again.
+- **turbo-vision 4.0.3.** Migrated the IDE from the 3.x line to
+  turbo-vision 4.x (consumed from crates.io; the submodule tracks `main`).
+  The 4.x line dropped `views::terminal_widget`, so the build/run output
+  pane is now vendored in `bruto-ide`. 4.0.3 adds the hidden-file toggle
+  and embedded checkboxes the file dialogs use.
 - **Upgraded to turbo-vision 3.0.0.** The IDE now consumes the crates.io
   release directly (the `turbo-vision-4-rust` submodule is kept at the
   `v3.0.0` tag for reference and excluded from the workspace, since 3.0
@@ -57,6 +84,12 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   `MenuItemBuilder` / `StatusItemBuilder`, `Handle<InputLine>` for the
   value editor, and `Application::execute_modal` for the build progress
   dialog replace the removed 2.x APIs. Layout and behaviour are unchanged.
+
+### Fixed
+- **Cursor flicker.** After the first build the terminal's hardware cursor
+  was left visible on top of the editor's own caret, and every redraw
+  dragged it across the screen, so it flickered whenever the mouse moved.
+  It now stays hidden outside dialogs.
 
 ## [1.0.2] — 2026-05-04
 

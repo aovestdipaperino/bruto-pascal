@@ -72,23 +72,24 @@ checksum = "b4388bee8683e3d04af747c73422af53102d2bd24d9eadb6cbc100baef4b43f8"
 
 [[package]]
 name = "bruto-ide"
-version = "1.0.2"
+version = "1.0.3"
 dependencies = [
  "bruto-lang",
- "turbo-vision 1.3.1",
+ "crossterm",
+ "turbo-vision",
 ]
 
 [[package]]
 name = "bruto-lang"
-version = "1.0.2"
+version = "1.0.3"
 dependencies = [
  "inkwell",
- "turbo-vision 1.3.1",
+ "turbo-vision",
 ]
 
 [[package]]
 name = "bruto-pascal"
-version = "1.0.2"
+version = "1.0.3"
 dependencies = [
  "bruto-ide",
  "bruto-lang",
@@ -99,17 +100,17 @@ dependencies = [
  "serde",
  "tar",
  "toml",
- "turbo-vision 3.0.1",
+ "turbo-vision",
  "ureq",
 ]
 
 [[package]]
 name = "bruto-pascal-lang"
-version = "1.0.2"
+version = "1.0.3"
 dependencies = [
  "bruto-lang",
  "inkwell",
- "turbo-vision 1.3.1",
+ "turbo-vision",
 ]
 
 [[package]]
@@ -843,15 +844,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "num_threads"
-version = "0.1.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c7398b9c8b70908f6371f47ed36737907c87c52af34c268fed0bf0ceb92ead9"
-dependencies = [
- "libc",
-]
-
-[[package]]
 name = "objc2"
 version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1282,17 +1274,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "703d5c7ef118737c72f1af64ad2f6f8c5e1921f818cdcb97b8fe6fc69bf66214"
 
 [[package]]
-name = "simplelog"
-version = "0.12.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16257adbfaef1ee58b1363bdc0664c9b8e1e30aed86049635fb5f147d065a9c0"
-dependencies = [
- "log",
- "termcolor",
- "time",
-]
-
-[[package]]
 name = "slab"
 version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1363,15 +1344,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "termcolor"
-version = "1.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "06794f8f6c5c898b3275aebefa6b8a1cb24cd2c6c79397ab15774837a0bc5755"
-dependencies = [
- "winapi-util",
-]
-
-[[package]]
 name = "thiserror"
 version = "2.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1421,9 +1393,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "85c17d80feb7334b40c484e45ed1a5273dfd8bfda537c3be2e74a06a6686f327"
 dependencies = [
  "deranged",
- "libc",
  "num-conv",
- "num_threads",
  "powerfmt",
  "serde_core",
  "time-core",
@@ -1560,35 +1530,15 @@ dependencies = [
 
 [[package]]
 name = "turbo-vision"
-version = "1.3.1"
+version = "4.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04e2ccc8a1b8c7bc5809e887be2899d58cfb2d6a5ada76b5a8c73709459bd454"
+checksum = "6ce91bd775638fca19f4edacaf39d3b44b36d8412110c547c5222c8e500957cd"
 dependencies = [
  "arboard",
- "base64",
  "chrono",
  "crossterm",
  "log",
  "qcell",
- "simplelog",
- "tracing",
- "unicode-width",
-]
-
-[[package]]
-name = "turbo-vision"
-version = "3.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a10366c041b60685048095aecbbfafd6fdeeefc2fddfad6e5850fac910facaf"
-dependencies = [
- "arboard",
- "base64",
- "chrono",
- "crossterm",
- "log",
- "qcell",
- "simplelog",
- "tracing",
  "unicode-width",
 ]
 
@@ -1765,15 +1715,6 @@ name = "winapi-i686-pc-windows-gnu"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac3b87c63620426dd9b991e5ce0329eff545bccbbb34f3be09ff6fb6ab51b7b6"
-
-[[package]]
-name = "winapi-util"
-version = "0.1.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
-dependencies = [
- "windows-sys 0.61.2",
-]
 
 [[package]]
 name = "winapi-x86_64-pc-windows-gnu"

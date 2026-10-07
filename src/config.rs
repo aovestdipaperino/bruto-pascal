@@ -29,6 +29,8 @@ pub struct BuildConfig {
     pub mode: String,
     /// `"size"`, `"both"` or `"speed"`.
     pub optimize: String,
+    /// Enable code obfuscation during the build process.
+    pub obfuscation: bool,
 }
 
 impl Default for BuildConfig {
@@ -42,6 +44,7 @@ impl From<&BuildOptions> for BuildConfig {
         Self {
             mode: o.profile.as_str().to_string(),
             optimize: o.optimize.as_str().to_string(),
+            obfuscation: o.obfuscate,
         }
     }
 }
@@ -51,6 +54,7 @@ impl BuildConfig {
         BuildOptions {
             profile: BuildProfile::parse(&self.mode).unwrap_or_default(),
             optimize: OptimizeFor::parse(&self.optimize).unwrap_or_default(),
+            obfuscate: self.obfuscation,
         }
     }
 }
@@ -104,6 +108,7 @@ mod tests {
         let opts = BuildOptions {
             profile: BuildProfile::Retail,
             optimize: OptimizeFor::Speed,
+            obfuscate: true,
         };
         let cfg = Config {
             show_about_dialog_on_start: false,
