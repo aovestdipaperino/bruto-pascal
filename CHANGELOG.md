@@ -41,6 +41,14 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 - **Procedural types** can be declared: `type TProc = procedure(n:
   integer);`. Their parameter lists now count `a, b: T` as two
   parameters.
+- **Turbo Pascal `object` types.** Fields, methods, single inheritance,
+  `virtual` and `abstract` methods dispatched through an FPC-layout VMT,
+  constructors and destructors, `inherited`, `Self`, `New(p, Init(...))`,
+  `p := New(PType, Init(...))`, `Dispose(p, Done)` and `TypeOf`. Inside
+  a method, the object's fields and methods can be used by bare name.
+  Methods may be named like built-ins (`TStream.Write`, `Read`).
+- **Routines can declare local `const` and `type` sections**, and a
+  routine's, program's or unit's declarations can come in any order.
 - **Conditional compilation and include files.** `{$DEFINE}`,
   `{$UNDEF}`, `{$IFDEF}`, `{$IFNDEF}`, `{$IF}` / `{$ELSEIF}` (with
   `defined()`, `not`, `and`, `or`, comparisons and the FPC version
@@ -69,6 +77,14 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   the Disassembly window's function headers) use the lower-case form.
 
 ### Fixed
+- **`read(...)` statements** parse; they used to be rejected.
+- **A routine with an empty body** (`begin end`) is compiled; it used to
+  be mistaken for a `forward` declaration and left undefined.
+- **Self-referencing pointer types** such as `PNode = ^TNode`, declared
+  before `TNode` and used for a `Next: PNode` field inside it, no longer
+  send the compiler into endless recursion.
+- **A function result of a fixed-width type** is initialised at its own
+  width; it used to be zeroed as a pointer, overwriting the stack.
 - **Boolean `and` / `or` short-circuit.** The right operand used to be
   evaluated even when the left one decided the result, so a guard like
   `(p <> nil) and (p^ > 0)` dereferenced `nil`. The language reference

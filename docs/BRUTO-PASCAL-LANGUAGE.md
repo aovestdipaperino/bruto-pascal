@@ -121,16 +121,20 @@ are picked up automatically.
 
 ```
 and       array   begin          case    char     const
-dispose   div     do             downto  else     end
-false     file    for            forward function goto
-if        implementation in      initialization
-integer   interface     label    mod     new      nil
-not       of      or             packed  procedure
-program   read    readln         real    record   repeat
-set       shl     shr            string  text     then
-to        true    type           unit    until    uses
-var       while   with           write   writeln  xor
+constructor  destructor  dispose div   do       downto
+else      end     false          file    for      forward
+function  goto    if             implementation   in
+inherited initialization  integer  interface      label
+mod       new     nil            not     object   of
+or        packed  procedure      program read     readln
+real      record  repeat         set     shl      shr
+string    text    then           to      true     type
+unit      until   uses           var     while    with
+write     writeln xor
 ```
+
+`read`, `write`, `new` and their kin can still be used as method names
+(`TStream.Write`) and assigned as function results.
 
 `exit`, `break` and `continue` are predeclared statements rather than
 reserved words, as in Turbo Pascal: a variable may still be named
@@ -204,9 +208,8 @@ Notes / restrictions:
   `array[0..MaxItems - 1]` and `array[Red..Blue]` both work. Typed
   constants (`const N: integer = 3`) are initialised variables and can't
   be used as bounds.
-- **Forward type references**: declare records first when they need to
-  point at themselves; use `next: ^Node` *inline*. Declaring `TreePtr
-  = ^Tree` *before* `Tree = record ...` is not supported.
+- **Pointer types can come first**: `PNode = ^TNode` may be declared
+  before `TNode`, and `TNode` may contain a `Next: PNode` field.
 - `set of integer` represents a 256-bit bitmap (ordinals 0..255).
 - `string` is dynamically sized (a NUL-terminated C string on the
   heap); you can pass it freely without size annotations. `s[i]` reads
@@ -290,8 +293,52 @@ end;
 - Procedures and functions can be nested; nested procs see the
   enclosing scope's variables.
 - `forward` declares a header so two procedures can call each other.
+- A routine's declarations (`const`, `type`, `var`, nested routines)
+  can come in any order and repeat, as can a program's or unit's.
 - **Conformant array parameters** — `var a: array of integer` — are
   parsed but only with limited support; prefer typed arrays.
+
+## Objects
+
+Turbo Pascal `object` types, as Free Vision uses them:
+
+```pascal
+type
+  PShape = ^TShape;
+  TShape = object
+    Name: string;
+    constructor Init(AName: string);
+    function Area: real; virtual;
+    destructor Done; virtual;
+  end;
+  TCircle = object(TShape)            { single inheritance }
+    Radius: real;
+    constructor Init(AName: string; R: real);
+    function Area: real; virtual;     { overrides TShape.Area }
+  end;
+
+constructor TCircle.Init(AName: string; R: real);
+begin
+  inherited Init(AName);              { parent's constructor }
+  Radius := R                         { fields by bare name inside methods }
+end;
+```
+
+- Methods are declared in the type and implemented as
+  `procedure TType.Method(...)`; the implementation may leave out the
+  parameter list. Inside a method, the object's fields and methods can
+  be used by bare name, and `Self` is the object itself.
+- `virtual` methods are called through the object's VMT, so the actual
+  type's version runs. A method declared `virtual; abstract;` stops the
+  program with runtime error 211 if it is called.
+- A constructor sets up the VMT, so an object with virtual methods must
+  be constructed before they are called: `obj.Init(...)` for a variable,
+  `New(p, Init(...))` or `p := New(PType, Init(...))` for one on the
+  heap. `Dispose(p, Done)` calls the destructor and frees the memory.
+- `TypeOf(TType)` or `TypeOf(obj)` gives the VMT's address. The VMT
+  layout (size, negated size, parent link, method slots) is FPC's.
+- `private`, `public` and `protected` sections are accepted but not
+  enforced.
 
 ## Statements
 
@@ -536,8 +583,9 @@ status.
 
 ## Known gaps versus Standard Pascal / FPC
 
-- No object-Pascal classes or generics. (Units / `uses` clause **are**
-  supported — see the Units section above.)
+- No Object Pascal `class` types or generics; Turbo Pascal `object`
+  types are supported (see Objects). Units and the `uses` clause are
+  supported too (see Units).
 - No `goto` to non-numeric labels (numeric only).
 - No `try / except / finally`, no exceptions.
 - Conformant array parameters are limited; prefer typed arrays.
