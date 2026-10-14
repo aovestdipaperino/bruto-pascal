@@ -82,10 +82,14 @@ are picked up automatically.
   with a letter. Case-insensitive, like keywords: `Count`, `count` and
   `COUNT` are the same name, and so are `Length` and `length`. The
   debugger shows each name the way it was first written.
-- **Numbers**: decimal integers (`42`), reals with explicit `.`
-  (`3.14`, `1.0e3`).
+- **Numbers**: decimal integers (`42`), hex `$FF`, binary `%1010`,
+  octal `&17`, reals with explicit `.` (`3.14`, `1.0e3`).
 - **Strings**: single-quoted (`'hello'`); doubled quote escapes a
   literal quote (`'don''t'`). A string can't span lines.
+- **Characters by code**: `#65` or `#$41` is `'A'`; `^M` is `#13`
+  (control characters, `^A` = `#1`). Quoted strings and codes written
+  next to each other form one string: `'line'#13#10`, `^M^J`.
+  Strings are byte strings: `#129` is the single byte 129.
 - **Comments**: `{ … }`, `(* … *)`, and `// …` to end of line. Brace
   comments nest, as in FPC: `{ outer { inner } still outer }`.
 - **Compiler directives**: inside a brace comment starting with `$`,
@@ -116,6 +120,11 @@ are picked up automatically.
   directives FPC knows (`{$mode}`, `{$H-}`, `{$codepage}` and so on) are
   accepted and ignored. Only `{$` with no space in between is a
   directive: `{ $ifdef X }` is an ordinary comment.
+
+  `{$DEFINE NAME := text}` also makes `NAME` a macro: wherever it
+  appears, `text` is read in its place (FPC's `{$MACRO ON}` style).
+  `Unit.Name` qualifiers (`System.Length`, `Objects.TRect`) are
+  accepted; units share one namespace, so the qualifier is dropped.
 
 ## Reserved words
 
@@ -233,7 +242,21 @@ const
 
 Program-level constants are visible everywhere, including inside
 procedure and function bodies, and untyped ones can be used in type
-bounds (see above).
+bounds (see above), where `length`, `sizeof`, `low`, `high`, `lo` and
+`hi` of constants and built-in types also work.
+
+Typed constants can have record and array values:
+
+```pascal
+const
+  Origin: TPoint = (X: 0; Y: 0);
+  Primes: array[1..4] of integer = (2, 3, 5, 7);
+  Empty:  TPoint = ();                     { every field zero }
+```
+
+A `resourcestring` section declares string constants like `const`.
+FPC hint directives after a declaration (`deprecated 'message'`,
+`platform`, `experimental`) are accepted and ignored.
 
 ## Variables
 
@@ -283,13 +306,16 @@ end;
 
 - A function returns its value by **assigning to its own name**:
   `Factorial := <expr>`, or with `exit(<expr>)`, which also leaves the
-  function. There is no `Result` alias yet.
+  function. `Result` also names the function's result, as in FPC.
 - A function without parameters can be called by its bare name, as in
   `writeln(Title)`, unless a variable of the same name is in scope.
-- `var` parameters pass by reference. Their argument must be a plain
-  variable name or a simple field/element access — **`SwapInt(arr[i],
-  arr[i+1])` does NOT typecheck** because `arr[i+1]` involves
-  arithmetic in the index.
+- `var`, `out` and `constref` parameters pass by reference; the
+  argument can be any variable, element, field or `p^`. `const`
+  parameters pass by value.
+- **Untyped parameters**: `var Buf` or `const Data` with no type pass
+  an address; the routine reads the memory through a cast
+  (`TBytes(Buf)[0]`) or an `absolute` variable
+  (`var Bytes: TBytes absolute Buf;`).
 - Procedures and functions can be nested; nested procs see the
   enclosing scope's variables.
 - `forward` declares a header so two procedures can call each other.
@@ -499,6 +525,9 @@ FPC.
 | `dispose(p)`  | free                                 |
 | `nil`         | null pointer literal                 |
 | `p^`          | dereference; works on any pointer expression, e.g. `PRec(p)^.Id` |
+| `p + n`, `p - n` | step a typed pointer by `n` elements (bytes for `Pointer`) |
+| `p - q`       | the distance between two pointers, in elements |
+| `TProc(p)(args)` | call through a procedural value given by a cast |
 | `@x`          | address of a variable, element, field, or routine (`@Proc`) |
 | `assigned(p)` | `p <> nil`, for pointers and procedural variables |
 | `T(x)`        | cast to type `T`: integers ↔ pointers, pointer ↔ pointer, narrowing to a fixed-width integer (`Byte(300)` is 44) |

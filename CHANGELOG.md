@@ -49,6 +49,20 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   Methods may be named like built-ins (`TStream.Write`, `Read`).
 - **Routines can declare local `const` and `type` sections**, and a
   routine's, program's or unit's declarations can come in any order.
+- **More of FPC's syntax, enough to parse every Free Vision unit and
+  `objects.pp`:** binary `%`, octal `&`, `#$hh` and `^M` character
+  literals with implicit concatenation (`'text'#13#10`), byte-exact
+  string literals, `{$DEFINE X := text}` macros, `Unit.Name`
+  qualifiers, `resourcestring`, hint directives, typed constants with
+  record and array values, `const` / `out` / `constref` and untyped
+  parameters, `absolute` variables, empty statements, `otherwise` in
+  `case`, `with` on any record or object expression (several at once),
+  `new` / `dispose` / `inc` / `dec` on any place, assignment through a
+  cast (`Pointer(P) := nil`), casts that reinterpret memory
+  (`TBytes(Buf)[0]`), pointer arithmetic, calls through a cast
+  procedural value (`TFunc(P)(args)`), `array[Boolean]`-style index
+  types, tagless and nested variant parts with constant labels, untyped
+  `file`, `String(x)`, `Str(x:width:precision, s)` and `Result`.
 - **Conditional compilation and include files.** `{$DEFINE}`,
   `{$UNDEF}`, `{$IFDEF}`, `{$IFNDEF}`, `{$IF}` / `{$ELSEIF}` (with
   `defined()`, `not`, `and`, `or`, comparisons and the FPC version
