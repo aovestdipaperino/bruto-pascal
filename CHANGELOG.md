@@ -63,6 +63,17 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   procedural value (`TFunc(P)(args)`), `array[Boolean]`-style index
   types, tagless and nested variant parts with constant labels, untyped
   `file`, `String(x)`, `Str(x:width:precision, s)` and `Result`.
+- **Overloaded routines.** Several routines may share a name if their
+  parameter types differ; each call picks the best fit. Routines can
+  also call others declared further down without `forward`.
+- **Nested procedural types** (`procedure(...) is nested`): a local
+  routine can be passed as a callback and still use its parent's
+  variables, as Free Vision's `ForEach` / `FirstThat` need.
+- **FPC's `Objects` unit compiles and runs**: collections, sorted string
+  collections, `ForEach` callbacks and stream registration with
+  `Put` / `Get`. Supporting this: `TAncestor.Method(...)` calls,
+  `@TType.Method`, FPC's frame intrinsics, `UnusedHandle`, and `CPULLVM`
+  among the predefined symbols.
 - **Short strings.** `string[N]`, `ShortString`, and `string` itself
   under `{$H-}` or FPC's `objfpc` / `fpc` / `tp` modes are stored in
   place with a length byte (`s[0]`), as Turbo Pascal and FPC do. Plain

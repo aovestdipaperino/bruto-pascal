@@ -323,7 +323,14 @@ end;
   (`var Bytes: TBytes absolute Buf;`).
 - Procedures and functions can be nested; nested procs see the
   enclosing scope's variables.
-- `forward` declares a header so two procedures can call each other.
+- `forward` declares a header so two procedures can call each other,
+  though it is rarely needed: any routine can call one declared further
+  down.
+- **Overloading**: routines may share a name if their parameter types
+  differ; each call picks the one whose parameters fit its arguments.
+- **Nested procedural types**: `type TCallback = procedure(Item:
+  Pointer) is nested;` accepts a local routine, which keeps access to
+  its parent's variables while the callback runs.
 - A routine's declarations (`const`, `type`, `var`, nested routines)
   can come in any order and repeat, as can a program's or unit's.
 - **Conformant array parameters** — `var a: array of integer` — are
