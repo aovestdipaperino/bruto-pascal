@@ -63,6 +63,17 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   procedural value (`TFunc(P)(args)`), `array[Boolean]`-style index
   types, tagless and nested variant parts with constant labels, untyped
   `file`, `String(x)`, `Str(x:width:precision, s)` and `Result`.
+- **Short strings.** `string[N]`, `ShortString`, and `string` itself
+  under `{$H-}` or FPC's `objfpc` / `fpc` / `tp` modes are stored in
+  place with a length byte (`s[0]`), as Turbo Pascal and FPC do. Plain
+  `string` stays the dynamic string otherwise, so existing programs are
+  unaffected.
+- **System routines:** `Move`, `FillChar`, `GetMem`, `FreeMem`,
+  `ReAllocMem`, `Halt`, `RunError`, `ParamCount`, `ParamStr`, `Hi`,
+  `Lo`, `Swap`, `Ofs`, the `FileMode` and `ExitCode` variables, `P`-type
+  pointers (`PChar`, `PByte`...) with array-style indexing, untyped
+  `file` with `BlockRead`, `BlockWrite` and `Truncate`. `System.X` names
+  these even inside a method or where the program has its own `X`.
 - **Conditional compilation and include files.** `{$DEFINE}`,
   `{$UNDEF}`, `{$IFDEF}`, `{$IFNDEF}`, `{$IF}` / `{$ELSEIF}` (with
   `defined()`, `not`, `and`, `or`, comparisons and the FPC version

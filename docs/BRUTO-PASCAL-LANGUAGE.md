@@ -220,6 +220,11 @@ Notes / restrictions:
 - **Pointer types can come first**: `PNode = ^TNode` may be declared
   before `TNode`, and `TNode` may contain a `Next: PNode` field.
 - `set of integer` represents a 256-bit bitmap (ordinals 0..255).
+- **Short strings**: `string[N]` and `ShortString` (and plain `string`
+  under `{$H-}` or `{$mode objfpc}`, `fpc` or `tp`, as in FPC) are
+  stored in place as N+1 bytes, byte 0 holding the length: `s[0]` reads
+  or sets it. Assigning a longer string truncates. In expressions they
+  behave like any string.
 - `string` is dynamically sized (a NUL-terminated C string on the
   heap); you can pass it freely without size annotations. `s[i]` reads
   or writes its `i`-th character (from 1). Writing copies the string
@@ -549,6 +554,21 @@ FPC.
 | `filesize(f)`          | total size in bytes                                |
 | `seek(f, n)`           | move to offset `n`                                 |
 | `ioresult`             | int: 0 on success, error code from last IO op      |
+| `reset(f, 1)` / `rewrite(f, 1)` | open an untyped `file` in binary read/write mode |
+| `blockread(f, buf, n [, done])` / `blockwrite(...)` | raw bytes to or from an untyped file |
+| `truncate(f)`          | cut the file at the current position               |
+
+### System routines
+
+Routines from FPC's `System` unit, used when the program doesn't
+declare its own of the same name (`System.X` always means these):
+`Move(src, dst, n)`, `FillChar(dst, n, value)`, `GetMem(p, size)`,
+`FreeMem(p [, size])`, `ReAllocMem(p, size)`, `Halt([code])`,
+`RunError(code)`, `ParamCount`, `ParamStr(i)`, `Hi`, `Lo`, `Swap`,
+`Ofs`. The variables `FileMode` and `ExitCode` exist too, and the types
+`PByte`, `PChar` and the other `P`-prefixed pointers to built-in types,
+`AnsiChar`, `ShortString`, `Double`, `FileRec`. A typed pointer can be
+indexed like an array: `p[i]`.
 
 `writeln` / `write` accept a leading file argument: `writeln(f, …)`.
 The predefined files `input` and `output` map to stdin / stdout.
