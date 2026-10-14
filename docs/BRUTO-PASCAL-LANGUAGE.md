@@ -79,8 +79,9 @@ are picked up automatically.
 ## Lexical elements
 
 - **Identifiers**: ASCII letters / digits / underscore, must start
-  with a letter. Case-insensitive when matched against keywords; user
-  identifiers preserve case.
+  with a letter. Case-insensitive, like keywords: `Count`, `count` and
+  `COUNT` are the same name, and so are `Length` and `length`. The
+  debugger shows each name the way it was first written.
 - **Numbers**: decimal integers (`42`), reals with explicit `.`
   (`3.14`, `1.0e3`).
 - **Strings**: single-quoted (`'hello'`); doubled quote escapes a
@@ -106,14 +107,14 @@ if        implementation in      initialization
 integer   interface     label    mod     new      nil
 not       of      or             packed  procedure
 program   read    readln         real    record   repeat
-set       string  text           then    to       true
-type      unit    until          uses    var      while
-with      write   writeln
+set       shl     shr            string  text     then
+to        true    type           unit    until    uses
+var       while   with           write   writeln  xor
 ```
 
-`exit`, `break`, `continue` are **not** reserved and **not**
-implemented as control-flow primitives — wrap loops in flag
-variables instead.
+`exit`, `break` and `continue` are predeclared statements rather than
+reserved words, as in Turbo Pascal: a variable may still be named
+`exit`.
 
 ## Built-in scalar types
 
@@ -125,6 +126,28 @@ variables instead.
 | `boolean` | `false` (0) / `true` (1)                                  |
 | `string`  | Length-prefixed dynamic string                            |
 | `text`    | A textual file handle (used with `assign`/`reset` etc.)   |
+
+FPC's fixed-width integers are predefined too:
+
+| Type | Width | Range |
+|------|-------|-------|
+| `ShortInt` / `Int8` | 8-bit signed | -128..127 |
+| `Byte` / `UInt8` | 8-bit unsigned | 0..255 |
+| `SmallInt` / `Int16` | 16-bit signed | -32768..32767 |
+| `Word` / `UInt16` | 16-bit unsigned | 0..65535 |
+| `LongInt` / `Int32` | 32-bit signed | -2147483648..2147483647 |
+| `LongWord` / `Cardinal` / `DWord` / `UInt32` | 32-bit unsigned | 0..4294967295 |
+| `Int64` / `PtrInt` / `SizeInt` / `NativeInt` | same as `integer` | |
+| `QWord` / `UInt64` / `PtrUInt` / `SizeUInt` / `NativeUInt` | 64-bit unsigned | |
+
+A variable of one of these types takes exactly that many bytes, so
+records and arrays have the layout FPC gives them. In expressions
+they behave like `integer`: values are widened to 64 bits when read,
+and truncated to the variable's width when stored, so `Byte` arithmetic
+wraps (`255 + 1` stored in a `Byte` is `0`). A program can declare its
+own type with one of these names, which then takes precedence. `QWord`
+arithmetic is done as signed 64-bit, so values above `high(Int64)`
+compare and divide incorrectly.
 
 Subrange types of the form `lo..hi` (where both bounds are integer
 literals) and enumerated types `(A, B, C)` are also user-definable.
@@ -155,8 +178,12 @@ type
 
 Notes / restrictions:
 
-- **Subrange / array bounds** must be **integer literals**, not
-  named constants. `array[1..MaxItems]` does not parse.
+- **Subrange / array bounds** are constant expressions: integer and
+  character literals, untyped constants, enumeration values, `+ - * div
+  mod`, unary minus, and `ord` / `chr` / `succ` / `pred` / `abs`. So
+  `array[0..MaxItems - 1]` and `array[Red..Blue]` both work. Typed
+  constants (`const N: integer = 3`) are initialised variables and can't
+  be used as bounds.
 - **Forward type references**: declare records first when they need to
   point at themselves; use `next: ^Node` *inline*. Declaring `TreePtr
   = ^Tree` *before* `Tree = record ...` is not supported.
@@ -174,9 +201,9 @@ const
   PadChar  = '.';
 ```
 
-Constants are visible only at the **program (outer) scope**. They are
-**not in scope inside procedure / function bodies** — inline the
-literal value, or pass it as a parameter.
+Program-level constants are visible everywhere, including inside
+procedure and function bodies, and untyped ones can be used in type
+bounds (see above).
 
 ## Variables
 
@@ -187,6 +214,11 @@ var
   pt1, pt2: Point;
   s:        string;
 ```
+
+Program-level variables are globals: every procedure and function can
+read and assign them, unless a local or parameter of the same name
+shadows them. The debugger's watch window shows them alongside the
+current routine's locals.
 
 All variables are zero-initialised at the start of the program (and
 each procedure call) — integers to `0`, reals to `0.0`, strings to
@@ -220,8 +252,10 @@ end;
 ```
 
 - A function returns its value by **assigning to its own name**:
-  `Factorial := <expr>`. There is no `Result` alias and no `return`
-  statement.
+  `Factorial := <expr>`, or with `exit(<expr>)`, which also leaves the
+  function. There is no `Result` alias yet.
+- A function without parameters can be called by its bare name, as in
+  `writeln(Title)`, unless a variable of the same name is in scope.
 - `var` parameters pass by reference. Their argument must be a plain
   variable name or a simple field/element access — **`SwapInt(arr[i],
   arr[i+1])` does NOT typecheck** because `arr[i+1]` involves
@@ -259,6 +293,18 @@ repeat
 until i > 1000;
 
 for i := 1 to 10 do  ...    { also: for i := 10 downto 1 }
+                            { both bounds are evaluated once; the loop stops
+                              at the final value, so `for b := 0 to 255` with
+                              a Byte `b` ends }
+
+{ leaving loops and routines early }
+for i := 1 to n do
+begin
+  if a[i] = 0 then continue;  { next iteration }
+  if a[i] < 0 then break;     { leave the innermost loop }
+end;
+exit;                         { leave the current procedure }
+exit(i);                      { in a function: set the result, then leave }
 
 { case (with ranges and an else clause) }
 case n of
@@ -289,16 +335,11 @@ new(p);   p^ := 42;   dispose(p);
 
 ### Statement-level limits
 
-- **No `exit` / `break` / `continue`** — exit a loop with a sentinel
-  flag; exit a function via the assign-to-name idiom plus a guarding
-  `if`.
 - **No `try` / `except`** error handling.
 - **No string indexing in expressions** — `s[k]` (read or write) is
   not supported. To get a single-character substring use
   `copy(s, k, 1)` (returns a `string`, not a `char`).
 - **No string-element assignment** — `s[k] := ch` is not supported.
-- **No unary minus on real** — write `0.0 - r` instead of `-r` when
-  `r` is a real expression.
 
 ## Expressions
 
@@ -307,15 +348,19 @@ Operator precedence (lowest → highest):
 | Group           | Operators                            |
 |-----------------|--------------------------------------|
 | Comparison      | `=`, `<>`, `<`, `<=`, `>`, `>=`, `in`|
-| Additive / OR   | `+`, `-`, `or`                       |
-| Multiplicative  | `*`, `/`, `div`, `mod`, `and`        |
-| Unary           | `-` (integers only), `not`           |
+| Additive / OR   | `+`, `-`, `or`, `xor`                |
+| Multiplicative  | `*`, `/`, `div`, `mod`, `and`, `shl`, `shr` |
+| Unary           | `-`, `not`                           |
 | Primary         | literals, `IDENT`, `IDENT(...)`, `(expr)` |
 
 `/` returns `real` even if both operands are integer; `div` and `mod`
 are integer-only.
 
-Boolean operators `and` and `or` are short-circuit.
+`and`, `or`, `xor` and `not` are logical on booleans and bitwise on
+integers. On booleans, `and` and `or` short-circuit: in
+`(p <> nil) and (p^ > 0)` the right side only runs when `p` isn't
+`nil`. `shl` and `shr` shift integers; `shr` is a logical shift, as in
+FPC.
 
 `set` literals: `[1, 3, 5..9, 13]`.
 `set` operators: `+` (union), `-` (difference), `*` (intersection),
@@ -350,8 +395,9 @@ Boolean operators `and` and `or` are short-circuit.
 | `chr(n)`      | `n: integer → char`                              |
 | `inc(v)` / `inc(v, k)` | mutate variable in place               |
 | `dec(v)` / `dec(v, k)` | mutate variable in place               |
-| `low(arr)`    | low array bound                                  |
-| `high(arr)`   | high array bound                                 |
+| `low(x)`      | low bound of an array, subrange, enum or integer type (variable or type name) |
+| `high(x)`     | high bound, likewise: `high(Word)` is 65535      |
+| `sizeof(x)`   | size in bytes of a variable or type, including alignment padding |
 
 ### Strings
 
@@ -464,13 +510,8 @@ status.
 
 ## Known gaps versus Standard Pascal / FPC
 
-- No `exit` / `break` / `continue` statements.
 - No string indexing (`s[i]`) and no string-element assignment
   (`s[i] := c`).
-- No unary minus on real expressions.
-- Constants from the program scope aren't visible inside procedures.
-- Subrange / array bounds must be integer literals, not named
-  constants.
 - No object-Pascal classes or generics. (Units / `uses` clause **are**
   supported — see the Units section above.)
 - No `goto` to non-numeric labels (numeric only).

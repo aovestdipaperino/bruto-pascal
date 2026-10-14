@@ -4,6 +4,70 @@ All notable changes to **bruto-pascal** are documented here. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Named constants in type bounds.** Array and subrange bounds accept
+  constant expressions, so `array[0..MaxItems - 1] of integer`,
+  `1..MaxItems` and `array[Red..Blue]` now compile. Bounds can use
+  literals, untyped constants, enumeration values, `+ - * div mod`, unary
+  minus, and `ord` / `chr` / `succ` / `pred` / `abs`. This runs in a new
+  semantic pass between parsing and code generation, the start of a
+  proper name-and-type resolution phase.
+- **Calling parameterless functions by name.** `writeln(Title)` calls
+  `function Title: string` when no variable named `Title` is in scope.
+- **`exit`, `break` and `continue`.** `break` and `continue` work in
+  `for`, `while` and `repeat` loops; `exit` leaves the current procedure
+  or function (or the program), and `exit(value)` sets a function's
+  result first. As in Turbo Pascal they aren't reserved words, so a
+  variable can still be called `exit`.
+- **Fixed-width integer types.** `Byte`, `ShortInt`, `Word`,
+  `SmallInt`, `LongInt`, `LongWord` / `Cardinal` / `DWord`, `QWord`,
+  `Int64`, `PtrInt` / `PtrUInt` and their `IntN` / `UIntN` and
+  `SizeInt` / `NativeInt` spellings. Variables take their real size, so
+  records have FPC's layout; values widen to 64 bits in expressions and
+  wrap when stored. `low` and `high` accept them (and type names such as
+  `high(Word)`), and the watch window shows `Byte` / `ShortInt` values as
+  numbers rather than characters.
+- **`sizeof`** of a variable or type, including alignment padding.
+- **Bitwise operators.** `and`, `or`, `not` and the new `xor` work
+  bitwise on integers and logically on booleans; `shl` and `shr` shift
+  integers. They can also appear in constant bounds
+  (`array[0..Mask shr 4]`).
+
+### Changed
+- **Identifiers are case-insensitive**, as Pascal requires: `Count`,
+  `count` and `COUNT` are the same name, and `Length(s)` or `Inc(x)`
+  now find the built-ins. The debugger, watch window and profiler still
+  show each name as it was first written. Machine-level symbols (and so
+  the Disassembly window's function headers) use the lower-case form.
+
+### Fixed
+- **Boolean `and` / `or` short-circuit.** The right operand used to be
+  evaluated even when the left one decided the result, so a guard like
+  `(p <> nil) and (p^ > 0)` dereferenced `nil`. The language reference
+  already promised short-circuit evaluation.
+- **Integers stored into `real` variables are converted.** `r := 1`,
+  `a[i] := 2` and passing an integer to a `real` parameter used to copy
+  the integer's raw bits, so the real read back as `0.0`.
+- **`for` loops stop at their final value.** The loop used to step past
+  the end and then compare, so a loop up to `maxint` overflowed, and one
+  over a `Byte` up to 255 would never end. It now leaves as soon as the
+  variable reaches the final value.
+- **Long loops no longer overflow the stack.** Each `begin ... end`
+  block's breakpoint marker, and temporaries such as set literals, took a
+  new stack slot every time they ran, so a loop of a few million
+  iterations crashed. Stack slots are now reserved once per call, in the
+  routine's entry block.
+- **Unary minus on real expressions.** `-r` used to be rejected; it now
+  negates the value.
+- **Procedures can use program-level variables and constants.** They
+  used to live inside `main`, so any procedure or function that touched
+  one failed with `undefined variable`. They are now globals, visible in
+  every routine and shadowed by locals and parameters of the same name.
+  The debugger watch window lists them alongside the current routine's
+  locals.
+
 ## [1.0.3] — 2026-10-07
 
 ### Added
