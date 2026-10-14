@@ -30,6 +30,19 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   `high(Word)`), and the watch window shows `Byte` / `ShortInt` values as
   numbers rather than characters.
 - **`sizeof`** of a variable or type, including alignment padding.
+- **Pointers.** `@x` takes the address of a variable, array element,
+  record field or routine; the untyped `Pointer` type (and
+  `CodePointer`) holds any address; `Assigned(p)` tests for `nil`; and
+  `^` now works on any pointer expression, so `PRec(p)^.Id := 7` both
+  reads and assigns.
+- **Casts by type name.** `T(x)` converts between integers and pointers,
+  between pointer types, and narrows to fixed-width integers
+  (`Byte(300)` is 44), for declared types as well as built-in ones.
+- **Procedural types** can be declared: `type TProc = procedure(n:
+  integer);`. Their parameter lists now count `a, b: T` as two
+  parameters.
+- **String indexing.** `s[i]` reads the `i`-th character and `s[i] := c`
+  replaces it, including through record fields (`r.Name[2] := 'X'`).
 - **Bitwise operators.** `and`, `or`, `not` and the new `xor` work
   bitwise on integers and logically on booleans; `shl` and `shr` shift
   integers. They can also appear in constant bounds
@@ -59,6 +72,9 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   new stack slot every time they ran, so a loop of a few million
   iterations crashed. Stack slots are now reserved once per call, in the
   routine's entry block.
+- **One-character literals in char contexts.** `'a'` used as a set
+  element, compared with a `char`, or stored into a `char` now means the
+  character; set literals such as `['a', 'e']` used to fail to compile.
 - **Unary minus on real expressions.** `-r` used to be rejected; it now
   negates the value.
 - **Procedures can use program-level variables and constants.** They

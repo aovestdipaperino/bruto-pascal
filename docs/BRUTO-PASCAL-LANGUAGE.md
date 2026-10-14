@@ -124,7 +124,7 @@ reserved words, as in Turbo Pascal: a variable may still be named
 | `real`    | 64-bit IEEE-754 (`double`)                                |
 | `char`    | 8-bit                                                     |
 | `boolean` | `false` (0) / `true` (1)                                  |
-| `string`  | Length-prefixed dynamic string                            |
+| `string`  | Dynamic string (a heap-allocated, NUL-terminated C string) |
 | `text`    | A textual file handle (used with `assign`/`reset` etc.)   |
 
 FPC's fixed-width integers are predefined too:
@@ -188,8 +188,15 @@ Notes / restrictions:
   point at themselves; use `next: ^Node` *inline*. Declaring `TreePtr
   = ^Tree` *before* `Tree = record ...` is not supported.
 - `set of integer` represents a 256-bit bitmap (ordinals 0..255).
-- `string` is dynamically sized, with a runtime length prefix; you
-  can pass it freely without size annotations.
+- `string` is dynamically sized (a NUL-terminated C string on the
+  heap); you can pass it freely without size annotations. `s[i]` reads
+  or writes its `i`-th character (from 1). Writing copies the string
+  first, so other variables holding the same text are unaffected.
+- `Pointer` is an untyped pointer. It can hold any address but can't be
+  dereferenced until it is cast to a typed pointer (`PRec(p)^`).
+- Procedural types: `type TProc = procedure(n: integer);` or
+  `function(x: real): real`. A variable of such a type holds `@Proc` or
+  a routine name and is called like the routine.
 
 ## Constants
 
@@ -336,10 +343,6 @@ new(p);   p^ := 42;   dispose(p);
 ### Statement-level limits
 
 - **No `try` / `except`** error handling.
-- **No string indexing in expressions** — `s[k]` (read or write) is
-  not supported. To get a single-character substring use
-  `copy(s, k, 1)` (returns a `string`, not a `char`).
-- **No string-element assignment** — `s[k] := ch` is not supported.
 
 ## Expressions
 
@@ -428,7 +431,10 @@ FPC.
 | `new(p)`      | allocate, store address in `p`       |
 | `dispose(p)`  | free                                 |
 | `nil`         | null pointer literal                 |
-| `p^`          | dereference                          |
+| `p^`          | dereference; works on any pointer expression, e.g. `PRec(p)^.Id` |
+| `@x`          | address of a variable, element, field, or routine (`@Proc`) |
+| `assigned(p)` | `p <> nil`, for pointers and procedural variables |
+| `T(x)`        | cast to type `T`: integers ↔ pointers, pointer ↔ pointer, narrowing to a fixed-width integer (`Byte(300)` is 44) |
 
 ### IO and files
 
@@ -510,8 +516,6 @@ status.
 
 ## Known gaps versus Standard Pascal / FPC
 
-- No string indexing (`s[i]`) and no string-element assignment
-  (`s[i] := c`).
 - No object-Pascal classes or generics. (Units / `uses` clause **are**
   supported — see the Units section above.)
 - No `goto` to non-numeric labels (numeric only).
