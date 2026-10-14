@@ -152,7 +152,7 @@ fn compile_and_run(
         return 1;
     }
 
-    let source = match std::fs::read_to_string(source_path) {
+    let source = match bruto_pascal_lang::source_map::read_source(source_path) {
         Ok(s) => s,
         Err(e) => {
             eprintln!("error: cannot read '{source_file}': {e}");
@@ -176,17 +176,8 @@ fn compile_and_run(
         }
     };
 
-    // Parse
-    let mut parser = bruto_pascal_lang::parser::Parser::new(&source);
-    let mut program = match parser.parse_program() {
-        Ok(p) => p,
-        Err(e) => {
-            eprintln!("{source_file}:{e}");
-            return 1;
-        }
-    };
-
-    // Resolve `uses` against the source file's directory + cwd.
+    // Units and `{$I}` include files are looked up in the source file's
+    // directory, then the working directory.
     let mut search_dirs: Vec<std::path::PathBuf> = Vec::new();
     if let Some(dir) = source_path.parent() {
         if !dir.as_os_str().is_empty() {
@@ -198,6 +189,23 @@ fn compile_and_run(
             search_dirs.push(cwd);
         }
     }
+
+    // Parse
+    let mut parser = bruto_pascal_lang::parser::Parser::with_options(
+        &source,
+        &bruto_pascal_lang::parser::ParseOptions {
+            file: None,
+            include_dirs: search_dirs.clone(),
+        },
+    );
+    let mut program = match parser.parse_program() {
+        Ok(p) => p,
+        Err(e) => {
+            eprintln!("{source_file}:{e}");
+            return 1;
+        }
+    };
+
     if let Err(e) = bruto_pascal_lang::resolve_uses(&mut program, &search_dirs) {
         eprintln!("error: {e}");
         return 1;

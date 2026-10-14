@@ -85,8 +85,9 @@ are picked up automatically.
 - **Numbers**: decimal integers (`42`), reals with explicit `.`
   (`3.14`, `1.0e3`).
 - **Strings**: single-quoted (`'hello'`); doubled quote escapes a
-  literal quote (`'don''t'`).
-- **Comments**: `{ … }`, `(* … *)`, and `// …` to end of line.
+  literal quote (`'don''t'`). A string can't span lines.
+- **Comments**: `{ … }`, `(* … *)`, and `// …` to end of line. Brace
+  comments nest, as in FPC: `{ outer { inner } still outer }`.
 - **Compiler directives**: inside a brace comment starting with `$`,
   e.g. `{$R+}`, `{$Q-}`, comma-separated for multiple
   (`{$R+,Q+}`):
@@ -96,6 +97,25 @@ are picked up automatically.
   | `{$R+}` / `{$R-}` | Enable/disable runtime range checks |
   | `{$Q+}` / `{$Q-}` | Enable/disable arithmetic overflow checks |
   | `{$I+}` / `{$I-}` | Enable/disable IO error trapping (`ioresult`) |
+
+  Conditional compilation and include files work as in FPC:
+
+  | Directive | Effect |
+  |-----------|--------|
+  | `{$DEFINE X}` / `{$UNDEF X}` | Define or remove a conditional symbol |
+  | `{$IFDEF X}` / `{$IFNDEF X}` | Compile what follows only if `X` is (not) defined |
+  | `{$IF expr}` / `{$ELSEIF expr}` | `expr` may use `defined(X)`, `not`, `and`, `or`, parentheses, numbers, comparisons and `FPC_FULLVERSION` (30202) |
+  | `{$ELSE}`, `{$ENDIF}` / `{$IFEND}` | Close a branch / the group |
+  | `{$I file}` / `{$INCLUDE file}` | Insert another file here. It is looked up next to the including file, then in the program's directory and the working directory; a name without an extension also matches `.inc`, `.pp` and `.pas`, and the case of the name doesn't matter |
+  | `{$ERROR msg}` / `{$FATAL msg}` | Stop with `msg` |
+
+  Symbols are case-insensitive. `FPC`, `BRUTO`, `CPU64`,
+  `ENDIAN_LITTLE`, the CPU (`CPUX86_64` or `CPUAARCH64`) and the
+  platform (`UNIX` plus `DARWIN` and `BSD` on macOS, `LINUX` on Linux,
+  `WINDOWS` / `MSWINDOWS` / `WIN64` on Windows) are predefined. Other
+  directives FPC knows (`{$mode}`, `{$H-}`, `{$codepage}` and so on) are
+  accepted and ignored. Only `{$` with no space in between is a
+  directive: `{ $ifdef X }` is an ordinary comment.
 
 ## Reserved words
 

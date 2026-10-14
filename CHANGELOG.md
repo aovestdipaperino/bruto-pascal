@@ -41,6 +41,16 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 - **Procedural types** can be declared: `type TProc = procedure(n:
   integer);`. Their parameter lists now count `a, b: T` as two
   parameters.
+- **Conditional compilation and include files.** `{$DEFINE}`,
+  `{$UNDEF}`, `{$IFDEF}`, `{$IFNDEF}`, `{$IF}` / `{$ELSEIF}` (with
+  `defined()`, `not`, `and`, `or`, comparisons and the FPC version
+  symbols), `{$ELSE}`, `{$ENDIF}`, `{$I file}` and `{$ERROR}`, with FPC's
+  predefined symbols for the host platform. Other FPC directives are
+  accepted and ignored. Code from an included file or a unit now carries
+  that file in its debug info, rather than being attributed to the main
+  program's lines, and errors in it name the file.
+- **Sources that aren't UTF-8** (code page 437, Latin-1) can be compiled
+  and included.
 - **String indexing.** `s[i]` reads the `i`-th character and `s[i] := c`
   replaces it, including through record fields (`r.Name[2] := 'X'`).
 - **Bitwise operators.** `and`, `or`, `not` and the new `xor` work
@@ -49,6 +59,9 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   (`array[0..Mask shr 4]`).
 
 ### Changed
+- **Brace comments nest**, as in FPC: `{ ... { ... } ... }` is one
+  comment, so a stray `{` inside a comment now needs its own `}`. A
+  string literal ends at the end of its line.
 - **Identifiers are case-insensitive**, as Pascal requires: `Count`,
   `count` and `COUNT` are the same name, and `Length(s)` or `Inc(x)`
   now find the built-ins. The debugger, watch window and profiler still
