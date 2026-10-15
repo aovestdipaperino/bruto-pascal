@@ -7,6 +7,12 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **FPC's Free Vision demo, `testapp.pas`, runs** (built without
+  `FV_UNICODE`): menus, the editor window, dialogs with radio buttons
+  and check boxes, the ASCII chart, the timed message box and the
+  status-line clock all work. New for it: `HexStr`, and a System
+  prelude written in Pascal (`rtl/system.pp`, with `GetFPCHeapStatus`)
+  for programs that use units.
 - **A Free Vision `TApplication` runs**: desktop, status line and
   Alt-X, with every FV unit compiled from FPC's sources. New for it:
   a `Dos` unit (`GetEnv`, `Exec`, `FindFirst`/`FindNext`, `FSplit`,
@@ -136,6 +142,11 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   the Disassembly window's function headers) use the lower-case form.
 
 ### Fixed
+- `Str` into a short string, typed short-string constants at program
+  level, and character arrays initialized from strings store the
+  characters rather than a pointer.
+- A character array assigned or passed to a pointer (`P := Chars`) is
+  its address, as FPC allows for `PChar`.
 - Nested routines with the same name in different routines, or nested
   two levels deep and using the outer routine's variables or the
   object's fields, compile correctly; so do calls between them.
