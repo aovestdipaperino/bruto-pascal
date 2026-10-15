@@ -74,7 +74,27 @@ project/
 ```
 
 Run `brutop Demo.pas` from anywhere — units beside the source file
-are picked up automatically.
+are picked up automatically. A unit file may be named `.pas` or `.pp`.
+
+Each unit has its own scope. Two units may declare the same name; a
+reference finds the unit's own declaration first, then the one in the
+last unit of its `uses` clause that exports it, and `Unit.Name`
+(`Video.InitVideo`, `Objects.TRect`) names a particular unit's.
+
+### Units that ship with the compiler
+
+When a used unit isn't found beside the program, Bruto's own versions
+of these FPC units are used. They implement what Free Vision needs on a
+Unix terminal:
+
+- **`Video`**: a screen buffer of character/attribute cells (code page
+  437), drawn with ANSI sequences on the terminal's alternate screen.
+- **`Keyboard`**: raw-mode input decoded into DOS-style key codes
+  (`$3B00` for F1, `$4800` for Up, Alt and Ctrl combinations).
+- **`Mouse`**: xterm SGR mouse reports, including the wheel.
+- **`BaseUnix`**, **`Unix`**, **`UnixType`**, **`TermIO`**: the C
+  library calls and types Free Vision uses.
+- **`BrutoConsole`**: the terminal layer the three above share.
 
 ## Lexical elements
 
@@ -331,6 +351,10 @@ end;
 - **Nested procedural types**: `type TCallback = procedure(Item:
   Pointer) is nested;` accepts a local routine, which keeps access to
   its parent's variables while the callback runs.
+- **External routines**: `function CLength(P: PChar): LongInt; cdecl;
+  external 'c' name 'strlen';` calls a C library function (`name`
+  defaults to the routine's own). With `varargs` a call may pass more
+  arguments than declared, for C functions like `ioctl` or `printf`.
 - A routine's declarations (`const`, `type`, `var`, nested routines)
   can come in any order and repeat, as can a program's or unit's.
 - **Conformant array parameters** — `var a: array of integer` — are
@@ -572,7 +596,10 @@ declare its own of the same name (`System.X` always means these):
 `Move(src, dst, n)`, `FillChar(dst, n, value)`, `GetMem(p, size)`,
 `FreeMem(p [, size])`, `ReAllocMem(p, size)`, `Halt([code])`,
 `RunError(code)`, `ParamCount`, `ParamStr(i)`, `Hi`, `Lo`, `Swap`,
-`Ofs`. The variables `FileMode` and `ExitCode` exist too, and the types
+`Ofs`, `SetLength(s, n)` (a dynamic string's new characters are
+spaces). The variables `FileMode` and `ExitCode` exist too, as does
+`ExitProc`: a procedure stored there runs when the program ends,
+normally or through `Halt`, and may store another. The types
 `PByte`, `PChar` and the other `P`-prefixed pointers to built-in types,
 `AnsiChar`, `ShortString`, `Double`, `FileRec`. A typed pointer can be
 indexed like an array: `p[i]`.

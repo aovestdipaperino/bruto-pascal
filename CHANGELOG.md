@@ -7,6 +7,19 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Free Vision's `Drivers` unit compiles and runs** on a Unix terminal,
+  reading keys and mouse events through Bruto's own `Video`, `Keyboard`
+  and `Mouse` units, which now ship with the compiler (together with
+  `BaseUnix`, `Unix`, `UnixType` and `TermIO`). They draw with ANSI
+  sequences and decode keys into DOS-style codes.
+- **Unit scopes.** Two units can declare the same name: references find
+  the unit's own declaration, then the last used unit's, and
+  `Unit.Name` picks one explicitly.
+- **External routines.** `cdecl; external 'c' name 'sym';` calls a C
+  library function, and `varargs` allows extra arguments.
+- **`ExitProc`** runs at program exit (also after `Halt`), and
+  `SetLength` resizes strings.
+- **Record comparison** with `=` and `<>`, field by field.
 - **Named constants in type bounds.** Array and subrange bounds accept
   constant expressions, so `array[0..MaxItems - 1] of integer`,
   `1..MaxItems` and `array[Red..Blue]` now compile. Bounds can use
@@ -113,6 +126,11 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   the Disassembly window's function headers) use the lower-case form.
 
 ### Fixed
+- `case` labels written as characters (`'a'..'z'`) and assignments
+  through nested variant fields (`Event.Where.X := 1`) compile.
+- `High` of a short string gives its capacity, a string character can
+  be passed by reference (`Move(S[1], ...)`), and `T(P^)` reads memory
+  through an untyped pointer.
 - **`read(...)` statements** parse; they used to be rejected.
 - **A routine with an empty body** (`begin end`) is compiled; it used to
   be mistaken for a `forward` declaration and left undefined.
