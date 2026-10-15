@@ -241,6 +241,10 @@ becomes `Ä`. `Length`, `Copy`, `Pos`, `Delete`, `Insert`, `SetLength`,
 `UpCase`/`LowerCase`, `S[i]`, `+` and the comparisons all work on code
 units, as in FPC; `write` prints UTF-8.
 
+In a file with `{$codepage cp437}`, a string literal's characters 128..255
+are code page 437's when it becomes a UnicodeString (`#219` is `█`); as
+an AnsiString it keeps the bytes. Other code pages are not supported.
+
 A character code above 255 (`#$2502`) is a `WideChar`, and a string
 literal containing one is a UnicodeString when stored as one (an
 AnsiString gets it in UTF-8). An `array of WideChar` can be initialized

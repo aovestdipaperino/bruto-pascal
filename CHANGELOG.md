@@ -7,6 +7,18 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Checked against real FPC**: FPC's Free Vision examples, built from
+  trunk sources with both FPC trunk and Bruto, now draw the same screens
+  in 25 of the 26 scenarios compared (menus, dialogs, the file dialog,
+  the editor, the ASCII chart, keytest, listdemo, the Unicode demo). The
+  exception, a one-row radio-button box, comes from a Free Vision bug
+  (it measures UnicodeStrings through `PString`) that FPC hits with
+  garbage lengths and Bruto with NUL-terminated ones.
+- `{$codepage cp437}`: a string literal's characters 128..255 are code
+  page 437's when it becomes a UnicodeString (Free Vision's history
+  button `#222'v'#221` is `▐v▌`); as an AnsiString it keeps its bytes.
+  String literals become UnicodeStrings at compile time.
+- `GetFPCHeapStatus` reports the malloc zone's figures on macOS.
 - **Free Vision's Unicode build (`FV_UNICODE`) runs**, so FPC's examples
   compile unmodified, `testuapp` included: menus, status line, dialogs,
   list boxes and the editor show CJK (two cells wide), Cyrillic, Greek
@@ -168,6 +180,13 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   the Disassembly window's function headers) use the lower-case form.
 
 ### Fixed
+- A cast of a UnicodeString variable to a short string type
+  (`TWildStr(S)`) converted the string instead of reading its pointer
+  as characters, so Free Vision's file dialog shows `../*.*` as FPC's
+  does.
+- Calling a method with the wrong number of arguments (`Close(F)` inside
+  a method of an object with a `Close` method) is a compile error, as in
+  FPC, instead of an LLVM verification failure.
 - Shift-selection and the clipboard work in Free Vision's editor:
   `GetShiftState` reports the modifiers of the last key read (a terminal
   sends them only with a key), where it always said none.
