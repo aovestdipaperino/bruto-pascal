@@ -7,6 +7,16 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **A Free Vision `TApplication` runs**: desktop, status line and
+  Alt-X, with every FV unit compiled from FPC's sources. New for it:
+  a `Dos` unit (`GetEnv`, `Exec`, `FindFirst`/`FindNext`, `FSplit`,
+  `FExpand`, `GetTime`...), `GetDir`/`ChDir`/`MkDir`/`RmDir`,
+  `Erase`/`Rename`, `InOutRes`, `UnicodeToUtf8`, FPC's System constants
+  (`DirectorySeparator`, `LineEnding`...), `Fail`, constructors used as
+  Boolean results (`if not inherited Init(...) then Fail`), and
+  `OpenString` parameters.
+- **Units may use each other through their implementations**; only
+  interface `uses` must not form a cycle.
 - **Free Vision's `Drivers` unit compiles and runs** on a Unix terminal,
   reading keys and mouse events through Bruto's own `Video`, `Keyboard`
   and `Mouse` units, which now ship with the compiler (together with
@@ -126,6 +136,16 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   the Disassembly window's function headers) use the lower-case form.
 
 ### Fixed
+- Nested routines with the same name in different routines, or nested
+  two levels deep and using the outer routine's variables or the
+  object's fields, compile correctly; so do calls between them.
+- A Pascal routine named like a C library function (`GetEnv`,
+  `TTYName`) no longer replaces it.
+- A string constant built with `+` is a string; adding characters
+  builds a string; a char passed for a string parameter is converted.
+- Pointer fields may point to an object type declared later; inline
+  enumerations in records and objects define their values; local
+  types have bounds; a local variable can share a unit's name.
 - `case` labels written as characters (`'a'..'z'`) and assignments
   through nested variant fields (`Event.Where.X := 1`) compile.
 - `High` of a short string gives its capacity, a string character can

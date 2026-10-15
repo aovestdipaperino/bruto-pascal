@@ -94,7 +94,13 @@ Unix terminal:
 - **`Mouse`**: xterm SGR mouse reports, including the wheel.
 - **`BaseUnix`**, **`Unix`**, **`UnixType`**, **`TermIO`**: the C
   library calls and types Free Vision uses.
+- **`Dos`**: environment, `Exec`, directory search (`FindFirst` /
+  `FindNext` / `FindClose`), `FSplit`, `FExpand`, `FSearch`, dates and
+  times.
 - **`BrutoConsole`**: the terminal layer the three above share.
+
+Units may use each other from their implementation sections; only the
+units an interface uses must not lead back to it.
 
 ## Lexical elements
 
