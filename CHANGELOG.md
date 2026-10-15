@@ -203,6 +203,9 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   (`array[0..Mask shr 4]`).
 
 ### Changed
+- `write` gives booleans as `TRUE` and `FALSE`, as FPC does, on the
+  console and to text files, and takes a width (`B:6`), so output can be
+  compared with FPC's directly.
 - **Brace comments nest**, as in FPC: `{ ... { ... } ... }` is one
   comment, so a stray `{` inside a comment now needs its own `}`. A
   string literal ends at the end of its line.
