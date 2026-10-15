@@ -7,6 +7,17 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Object Pascal classes.** `class` types with heap instances used
+  through references, `TObject` as the root (`Create`, `Destroy`,
+  `Free`, `ClassName`, `ClassType`, `ClassParent`, `InheritsFrom`...),
+  `virtual`/`override`/`abstract`, `inherited`, class methods,
+  `class of` references and virtual constructors, `is` and `as`, and
+  properties (field or getter/setter, array, `default` and `index`
+  properties). Destroying an instance frees it and the strings in its
+  fields. SysUtils gains `FreeAndNil`. Classes work beside `object`
+  types, including Free Vision's (whose `TObject` is an object type).
+  Not yet: exceptions, interfaces, `class var`, method pointers that
+  carry their instance.
 - **Network access**: a `Sockets` unit (FPC's interface, macOS and
   Linux), `NetDB.ResolveHostByName`, and `NetObjects`, Turbo Pascal
   objects for TCP clients and servers, UDP and plain HTTP `GET`.

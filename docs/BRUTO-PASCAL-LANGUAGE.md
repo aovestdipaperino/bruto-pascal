@@ -482,6 +482,84 @@ end;
 - `private`, `public` and `protected` sections are accepted but not
   enforced.
 
+## Classes
+
+Object Pascal `class` types, with FPC's semantics:
+
+```pascal
+type
+  TShape = class
+  private
+    FName: string;
+    procedure SetName(const V: string);
+  public
+    constructor Create(const AName: string); virtual;
+    destructor Destroy; override;
+    function Area: Double; virtual; abstract;
+    class function Kind: string; virtual;
+    property Name: string read FName write SetName;
+  end;
+  TShapeClass = class of TShape;
+
+  TSquare = class(TShape)
+  ...
+
+var
+  S: TShape;
+  C: TShapeClass;
+begin
+  C := TSquare;
+  S := C.Create('sq');                { virtual constructor }
+  writeln(S.Name, ' ', S.Area:0:1, ' ', S.ClassName);
+  if S is TSquare then writeln((S as TSquare).Side:0:1);
+  S.Free;
+end.
+```
+
+- An instance lives on the heap and a variable of class type refers to
+  it: `TFoo.Create(...)` allocates (zeroed) and constructs one,
+  `Obj.Free` destroys it unless `Obj` is nil, and `Obj.Field`,
+  `Obj.Method` need no `^`. Assigning a class variable copies the
+  reference.
+- Every class descends from `TObject` (`Create`, `Destroy`, `Free`,
+  `ClassName`, `ClassNameIs`, `ClassType`, `ClassParent`,
+  `InheritsFrom`, `InstanceSize`, `Equals`, `GetHashCode`, `ToString`).
+  `TClass` is `class of TObject`. SysUtils has `FreeAndNil`.
+- `virtual` starts a new slot; `override` replaces the parent's method
+  (it is an error if there is none to replace). `abstract` methods stop
+  the program with runtime error 211 if called. `inherited Method(...)`
+  and a bare `inherited;` call the parent's version.
+- The destructor frees the instance after its body has run, releasing
+  the strings its fields hold; `inherited Destroy` inside a destructor
+  doesn't free it twice.
+- `class procedure` / `class function`: `Self` is the class. They can be
+  called on the class (`TFoo.Kind`), a class reference or an instance,
+  and can be virtual.
+- `class of T` types hold a class (its VMT). A class name used as a
+  value is its class reference.
+- `Obj is TFoo` tests the instance's class (false for nil); `Obj as
+  TFoo` gives the instance, or stops with runtime error 219 if it isn't
+  one (nil stays nil).
+- Properties read and write a field (or a field path, `FPoint.X`) or
+  call a getter and setter. Array properties take index parameters
+  (`property Items[I: Integer]: T read GetItem write SetItem;`), the
+  `default` one is reached as `Obj[I]`, and `index N` passes N to a
+  shared getter or setter. Inside the class's methods, and in a `with`
+  on an instance, properties can be used by bare name.
+- Forward declarations (`TFoo = class;`), classes with no body
+  (`EFoo = class(TBase);`) and implemented interfaces in the heading
+  (accepted, not checked) are allowed. `published`, `strict private` and
+  so on are accepted but not enforced.
+- Classes and `object` types mix freely in one program: an object can
+  hold a class reference and a class can hold a pointer to an object.
+  Where the program has a `TObject` of its own (Free Vision's Objects
+  unit), the root class is still the one classes descend from, and its
+  `ClassName` is still `TObject`.
+- Not yet: exceptions (`try`/`except`/`finally`, `raise`), `class var`,
+  interfaces, published RTTI and streaming, `AfterConstruction` and
+  `BeforeDestruction` being called, method pointers (`procedure of
+  object`) holding their instance.
+
 ## Statements
 
 ```pascal
@@ -753,9 +831,9 @@ status.
 
 ## Known gaps versus Standard Pascal / FPC
 
-- No Object Pascal `class` types or generics; Turbo Pascal `object`
-  types are supported (see Objects). Units and the `uses` clause are
-  supported too (see Units).
+- No generics or interfaces. Turbo Pascal `object` types and Object
+  Pascal classes are supported (see Objects and Classes), and so are
+  units and the `uses` clause (see Units).
 - No `goto` to non-numeric labels (numeric only).
 - No `try / except / finally`, no exceptions.
 - Conformant array parameters are limited; prefer typed arrays.
