@@ -89,8 +89,22 @@ Unix terminal:
 
 - **`Video`**: a screen buffer of character/attribute cells (code page
   437), drawn with ANSI sequences on the terminal's alternate screen.
+  After `InitEnhancedVideo` the buffer is `EnhancedVideoBuf`, whose
+  cells (`TEnhancedVideoCell`) hold a grapheme cluster
+  (`ExtendedGraphemeCluster`, a UnicodeString) and an `Attribute`; a
+  wide cluster (CJK, most emoji) covers the cell to its right too.
+  `ExtendedGraphemeClusterDisplayWidth` and `StringDisplayWidth` give
+  widths in cells.
+- **`GraphemeBreakProperty`**: `TUnicodeStringExtendedGraphemeClustersEnumerator`,
+  which splits a UnicodeString into user-perceived characters for a
+  `for-in` loop (base characters with their combining marks, emoji
+  sequences, flags). FPC has it as a class in System; here it is an
+  `object`.
 - **`Keyboard`**: raw-mode input decoded into DOS-style key codes
-  (`$3B00` for F1, `$4800` for Up, Alt and Ctrl combinations).
+  (`$3B00` for F1, `$4800` for Up, Alt and Ctrl combinations). Enhanced
+  key events carry the typed character in `UnicodeChar` (UTF-8 input is
+  decoded; a character outside the BMP comes as two events, one per
+  surrogate).
 - **`Mouse`**: xterm SGR mouse reports, including the wheel.
 - **`BaseUnix`**, **`Unix`**, **`UnixType`**, **`TermIO`**: the C
   library calls and types Free Vision uses.
@@ -98,6 +112,8 @@ Unix terminal:
   `FindNext` / `FindClose`), `FSplit`, `FExpand`, `FSearch`, dates and
   times.
 - **`BrutoConsole`**: the terminal layer the three above share.
+- **`fpwidestring`**, **`cwstring`**: empty, since conversions between
+  UnicodeString and AnsiString are built in.
 
 Units may use each other from their implementation sections; only the
 units an interface uses must not lead back to it.
@@ -182,8 +198,10 @@ reserved words, as in Turbo Pascal: a variable may still be named
 | `integer` | 64-bit signed                                             |
 | `real`    | 64-bit IEEE-754 (`double`)                                |
 | `char`    | 8-bit                                                     |
+| `WideChar` | 16-bit, one UTF-16 code unit (`UnicodeChar` too)        |
 | `boolean` | `false` (0) / `true` (1)                                  |
 | `string`  | Dynamic string (a heap-allocated, NUL-terminated C string) |
+| `UnicodeString` | UTF-16 string, as FPC's (`WideString` too)        |
 | `text`    | A textual file handle (used with `assign`/`reset` etc.)   |
 
 FPC's fixed-width integers are predefined too:
@@ -210,6 +228,27 @@ compare and divide incorrectly.
 
 Subrange types of the form `lo..hi` (where both bounds are integer
 literals) and enumerated types `(A, B, C)` are also user-definable.
+
+### UnicodeString and WideChar
+
+A `UnicodeString` holds UTF-16 code units laid out as in FPC: a pointer
+to the units, with the length stored before them; nil is the empty
+string. `AnsiString` (`string`) is UTF-8, FPC's default code page on
+Unix, and converting between the two (by assignment, by passing a
+parameter, or with a cast) encodes or decodes UTF-8. A byte that isn't
+part of a UTF-8 sequence converts as a Latin-1 character, so `#196`
+becomes `Ä`. `Length`, `Copy`, `Pos`, `Delete`, `Insert`, `SetLength`,
+`UpCase`/`LowerCase`, `S[i]`, `+` and the comparisons all work on code
+units, as in FPC; `write` prints UTF-8.
+
+A character code above 255 (`#$2502`) is a `WideChar`, and a string
+literal containing one is a UnicodeString when stored as one (an
+AnsiString gets it in UTF-8). An `array of WideChar` can be initialized
+from a string constant. `UnicodeString(P)` of a raw pointer and
+`Pointer(S)` reinterpret, as FPC's do for collection items.
+
+Bruto doesn't count references: strings are never changed in place,
+so `S[i] := C` builds a new string. Memory isn't freed.
 
 ## Type system
 
@@ -435,6 +474,11 @@ repeat
 until i > 1000;
 
 for i := 1 to 10 do  ...    { also: for i := 10 downto 1 }
+for c in s do ...           { the characters of a string, the elements of
+                              an array, or an enumerator: for E in
+                              T.Create(...) runs constructor Create on a
+                              hidden T (an object type), then
+                              while E.MoveNext do X := E.Current }
                             { both bounds are evaluated once; the loop stops
                               at the final value, so `for b := 0 to 255` with
                               a Byte `b` ends }
@@ -546,10 +590,12 @@ FPC.
 | `pos(sub, s)`    | 1-based position of `sub` in `s`, or 0 if absent   |
 | `concat(a,b,…)`  | concatenate 2+ strings                             |
 | `str(n, s)`      | format integer `n` into string `s`                 |
-| `val(s, n, c)`   | parse `s` into integer `n`; `c` = first bad index  |
-| `upcase(c)`      | uppercase single `char`                            |
+| `val(s, n, c)`   | parse `s` into integer or real `n` (`$`, `%`, `&` prefixes too); `c` = first bad index, 0 if none |
+| `upcase(c)`      | uppercase `char`, or `WideChar`/UnicodeString (Latin, Greek, Cyrillic) |
 | `delete(s, i, n)`| remove `n` chars from `s` at position `i`          |
 | `insert(t, s, i)`| insert string `t` into `s` at position `i`         |
+| `Utf8ToUnicode`, `UnicodeToUtf8` | FPC's buffer conversions; the result counts the terminating zero |
+| `UTF8ToString`, `UTF8Decode`, `UTF8Encode` | UTF-8 to UnicodeString and back |
 
 ### Sets
 

@@ -7,6 +7,24 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Free Vision's Unicode build (`FV_UNICODE`) runs**, so FPC's examples
+  compile unmodified, `testuapp` included: menus, status line, dialogs,
+  list boxes and the editor show CJK (two cells wide), Cyrillic, Greek
+  and combining characters, and typed UTF-8 text (emoji too) reaches
+  input lines and the editor. New for it:
+  - `UnicodeString` and `WideChar` as FPC has them (UTF-16, converted to
+    and from UTF-8 AnsiStrings), with `Length`, `Copy`, `Pos`, `Delete`,
+    `Insert`, `SetLength`, `UpCase`, indexing, concatenation and
+    comparison; `#$2502` character codes; `array of WideChar` constants.
+  - `for X in ...` loops over strings, arrays and enumerator objects.
+  - Video's enhanced mode (`InitEnhancedVideo`, `TEnhancedVideoCell`,
+    `EnhancedVideoBuf`, display widths), a `GraphemeBreakProperty` unit
+    with the grapheme cluster enumerator, an `fpwidestring` unit, and
+    `UnicodeChar` in enhanced key events.
+  - `Utf8ToUnicode`, `UnicodeToUtf8`, `UTF8ToString`, `UTF8Decode`,
+    `UTF8Encode`, `CompareByte`, `IndexByte`, `SetCodePage`,
+    `StringCodePage`.
+  - `BRUTO_DUMP_IR=file` writes a build's LLVM IR, for debugging.
 - **All of Free Vision's example programs run** (without `FV_UNICODE`):
   `keytest`, `listdemo` (mouse double-click included), `filedlg` (the
   file open dialog reading the directory), `demoedit`, `colorselonly`
@@ -150,6 +168,14 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   the Disassembly window's function headers) use the lower-case form.
 
 ### Fixed
+- `Val` sets the error position (it was always 0), reads reals and `$`
+  hex, and stores into fields and narrow integers without overwriting
+  what follows them.
+- Chars compare as unsigned: `#$82 < #32` was true.
+- A cast of an untyped `var` parameter (`T(Rec)`) reads the memory it
+  refers to; a typed pointer value can be indexed (`PCell(@Buf)[I]`).
+- A set membership test of a value above 255 is false instead of
+  reading past the set.
 - `Copy` with an index below 1 or a count past the end returns what FPC
   does instead of reading outside the string.
 - A string variable that was never assigned compares as empty.
