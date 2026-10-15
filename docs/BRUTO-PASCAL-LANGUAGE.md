@@ -457,6 +457,13 @@ end;
 - **Conformant array parameters** — `var a: array of integer` — are
   parsed but only with limited support; prefer typed arrays.
 
+Parameters can have default values, used when a call leaves them out
+(`procedure Connect(const Host: string; Port: Word = 80);`). A unit's
+implementation may leave out the defaults its interface declares.
+Procedural types keep `var`, `out` and untyped `const` parameters by
+reference. A statement can call a method on a call's result
+(`TFoo.Create(...).Free`).
+
 ## Objects
 
 Turbo Pascal `object` types, as Free Vision uses them:
@@ -572,6 +579,11 @@ end.
   Where the program has a `TObject` of its own (Free Vision's Objects
   unit), the root class is still the one classes descend from, and its
   `ClassName` is still `TObject`.
+- Methods can be overloaded (`function Get(const URL: string): string;
+  overload;` beside `procedure Get(const URL: string; Stream: TStream);
+  overload;`); the call's arguments pick one. In a class, a method with
+  the name of an ancestor's but other parameters adds an overload; in an
+  `object` type it hides the ancestor's, as in Turbo Pascal.
 - Method pointers (`procedure(...) of object`, `function(...): T of
   object`) hold a method and its instance, as FPC's `TMethod` (`Code`,
   `Data`): `B.OnClick := @Form.ButtonClick` (or `@ButtonClick` inside
@@ -579,8 +591,7 @@ end.
   `if Assigned(FOnClick) then FOnClick(Self)`. A virtual method is looked
   up when the pointer is made. Methods of `object` types work too.
 - Not yet: `class var`, interfaces, published RTTI and streaming,
-  `AfterConstruction` and `BeforeDestruction` being called, `var`
-  parameters in procedural and method pointer types.
+  `AfterConstruction` and `BeforeDestruction` being called.
 
 ## Exceptions
 

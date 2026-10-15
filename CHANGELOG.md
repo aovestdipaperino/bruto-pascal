@@ -7,6 +7,11 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Overloaded methods** and constructors, picked by the call's
+  arguments; **default parameter values** (`Port: Word = 80`), also
+  declared only in a unit's interface; `var`/`out` parameters in
+  procedural and method pointer types; call chains as statements
+  (`TFoo.Create(...).Free`); `StringOfChar`.
 - **A `Classes` unit**: `TFPList`, `TList`, `TStrings`, `TStringList`
   (sorting, duplicates, `CommaText`/`DelimitedText`, `Values[]`,
   `LoadFromFile`/`SaveToFile`, `OnChange`, `OwnsObjects`), `TPersistent`,
