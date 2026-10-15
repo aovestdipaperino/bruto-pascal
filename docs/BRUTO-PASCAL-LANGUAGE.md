@@ -125,7 +125,8 @@ Unix terminal:
   `TTcpServer` (`Listen`, `Accept`), `TUdpSocket` and `THttpClient`
   (plain-HTTP `Get`, chunked bodies decoded, `Header`). Constructors
   `Fail` when they can't connect, so `if not C.Connect(...) then` works.
-- **`Classes`**: FPC's lists, string lists and streams. `TFPList` and
+- **`Classes`**: FPC's lists, string lists, streams and `TComponent`
+  (owned components are freed with their owner). `TFPList` and
   `TList` (pointer lists with `Sort`), `TStrings` / `TStringList`
   (`Strings[]` by default, `Objects[]`, `IndexOf`, `Sort`, `CustomSort`,
   `Sorted` with `Duplicates`, `CaseSensitive`, `OwnsObjects`, `Text`,
@@ -142,6 +143,29 @@ Unix terminal:
   `FileSeek` / `FileClose`, `DeleteFile`, `RenameFile`, `CompareStr`,
   `CompareText`, `SameText`, `AnsiCompareText`, `QuotedStr`,
   `GetLastOSError`, `SysErrorMessage`.
+- **`OpenSSL`**: FPC's names for the OpenSSL calls TLS needs
+  (`InitSSLInterface`, `SslCtxNew`, `SslNew`, `SslConnect`, `SslRead`,
+  ...). libssl and libcrypto (OpenSSL 1.1 or 3) are loaded at run time:
+  Homebrew's on macOS, the system's on Linux, `libssl-3-x64.dll` on
+  Windows.
+- **`ssockets`**, **`sslbase`**, **`sslsockets`**, **`opensslsockets`**:
+  FPC's socket streams. `TInetSocket.Create(Host, Port[, Handler])`
+  connects (a `TStream`), `TInetServer` listens and accepts
+  (`GetConnection`, or `StartAccepting` with `OnConnect`), and a
+  `TSSLSocketHandler` makes either one TLS: with `opensslsockets` in the
+  `uses` clause, `TSSLSocketHandler.GetDefaultHandler` gives an OpenSSL
+  handler. `VerifyPeerCert` checks the server's certificate chain and
+  host name (against the system's trusted certificates, or
+  `CertificateData.TrustedCertificate`); a server gets its certificate
+  and key from `CertificateData.Certificate` / `.PrivateKey` (PEM
+  files). Unix only, like `Sockets`.
+- **`fphttpclient`**: FPC's `TFPHTTPClient`: `Get` (to a string, a
+  stream or a file), `SimpleGet`, `Post`, `FormPost`, `Put`, `Delete`,
+  `Head`, request and response headers, `AllowRedirect`, basic
+  authentication, chunked bodies. `https://` URLs need `opensslsockets`
+  in the `uses` clause; set `VerifySSLCertificate` to check certificates
+  (off by default, as in FPC). `Get` raises `EHTTPClient` for a status
+  other than 200.
 - **`fpwidestring`**, **`cwstring`**: empty, since conversions between
   UnicodeString and AnsiString are built in.
 

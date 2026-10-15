@@ -7,6 +7,13 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **TLS and HTTPS**, through FPC's own units: `ssockets` (`TInetSocket`,
+  `TInetServer`), `sslsockets` and `opensslsockets` (TLS handlers, with
+  certificate and host-name checking), `OpenSSL` (loaded at run time),
+  and `fphttpclient` (`TFPHTTPClient.Get('https://...')`). Checked
+  against example.com and badssl.com, and a local TLS server in the
+  tests.
+- `TComponent` in Classes.
 - **Overloaded methods** and constructors, picked by the call's
   arguments; **default parameter values** (`Port: Word = 80`), also
   declared only in a unit's interface; `var`/`out` parameters in
@@ -246,6 +253,13 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   the Disassembly window's function headers) use the lower-case form.
 
 ### Fixed
+- A `PChar` stored into a string is copied, as FPC does; before, the
+  string pointed at the C buffer (wrong once the buffer changed).
+- A string constant passed to an untyped parameter
+  (`Stream.WriteBuffer('ping', 4)`) passes its characters.
+- Calling a class method through an overloaded name on the class
+  (`TFPHTTPClient.GetHeader(...)`), and choosing overloads for enum,
+  set and class-reference arguments.
 - `ReallocMem(P, 0)` frees the block and sets `P` to nil, as in FPC.
 - Calls through an abstract method pass `var` and untyped arguments by
   reference.
