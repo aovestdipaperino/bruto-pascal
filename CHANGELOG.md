@@ -7,6 +7,13 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Strings are freed.** AnsiStrings and UnicodeStrings are reference
+  counted: storing one counts it, the one it replaces is released,
+  routines release their string locals and value parameters, and the
+  strings a statement makes but never stores are freed when it ends
+  (loop conditions on each test). Free Vision's Unicode demo now stays at
+  about 220 KB while idle (FPC's: 188 KB), where it grew by megabytes a
+  second. `BRUTO_NO_ARC=1` at compile time turns it off.
 - **AnsiStrings are length-prefixed**, laid out as FPC's: a header with a
   marker, a reference count and the length before NUL-terminated
   characters. Strings can hold #0 (and `write` writes it), `Length` is
@@ -189,6 +196,9 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   the Disassembly window's function headers) use the lower-case form.
 
 ### Fixed
+- `New` zeroes the record it allocates, as FPC initializes its strings.
+- `Str`, `Format`, `HexStr`, `GetDir` and `ReadLn` no longer leak the C
+  buffers they format into.
 - `SetLength` on a string fills new characters with #0 (they were
   spaces).
 - A cast of a UnicodeString variable to a short string type

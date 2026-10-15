@@ -239,6 +239,14 @@ the length, as in FPC. So `Length` is immediate and a string may contain
 accepted as a string too, measured up to its first #0. `SetLength` fills
 new characters with #0.
 
+Strings are reference counted, as in FPC: assigning one counts it, the
+string it replaces is released, a routine releases its string locals and
+value parameters when it returns, and a string a statement makes without
+storing it is freed when the statement ends. A string written into raw
+memory (`Move`, `GetMem`) isn't counted, as in FPC. Building with the
+environment variable `BRUTO_NO_ARC=1` turns counting off (strings are
+then never freed).
+
 ### UnicodeString and WideChar
 
 A `UnicodeString` holds UTF-16 code units laid out as in FPC: a pointer
@@ -261,8 +269,8 @@ AnsiString gets it in UTF-8). An `array of WideChar` can be initialized
 from a string constant. `UnicodeString(P)` of a raw pointer and
 `Pointer(S)` reinterpret, as FPC's do for collection items.
 
-Bruto doesn't count references: strings are never changed in place,
-so `S[i] := C` builds a new string. Memory isn't freed.
+Like AnsiStrings, UnicodeStrings are reference counted. A string is never
+changed in place: `S[i] := C` builds a new string.
 
 ## Type system
 
