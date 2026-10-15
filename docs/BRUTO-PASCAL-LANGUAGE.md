@@ -200,7 +200,7 @@ reserved words, as in Turbo Pascal: a variable may still be named
 | `char`    | 8-bit                                                     |
 | `WideChar` | 16-bit, one UTF-16 code unit (`UnicodeChar` too)        |
 | `boolean` | `false` (0) / `true` (1)                                  |
-| `string`  | Dynamic string (a heap-allocated, NUL-terminated C string) |
+| `string`  | Dynamic string (AnsiString): length-prefixed, may hold #0, also a C string |
 | `UnicodeString` | UTF-16 string, as FPC's (`WideString` too)        |
 | `text`    | A textual file handle (used with `assign`/`reset` etc.)   |
 
@@ -228,6 +228,16 @@ compare and divide incorrectly.
 
 Subrange types of the form `lo..hi` (where both bounds are integer
 literals) and enumerated types `(A, B, C)` are also user-definable.
+
+### AnsiString
+
+A `string` (AnsiString) points at its characters, which end with a #0
+byte and follow a 16-byte header holding a marker, a reference count and
+the length, as in FPC. So `Length` is immediate and a string may contain
+#0 characters, yet the same pointer is a C string for C routines and
+`PChar(S)`. A C string from elsewhere (a `PChar`, the C library) is
+accepted as a string too, measured up to its first #0. `SetLength` fills
+new characters with #0.
 
 ### UnicodeString and WideChar
 

@@ -7,6 +7,15 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **AnsiStrings are length-prefixed**, laid out as FPC's: a header with a
+  marker, a reference count and the length before NUL-terminated
+  characters. Strings can hold #0 (and `write` writes it), `Length` is
+  immediate, and a short string's #0 characters survive conversion. C
+  strings from elsewhere still work. The string runtime is written in
+  Pascal (`rtl/brutostrings.pp`) and is part of every program, even
+  one compiled through `CodeGen` directly; the profiler leaves it out.
+  With this, Free Vision's one-row radio-button box draws as FPC's does:
+  all 26 compared scenarios now match.
 - **Checked against real FPC**: FPC's Free Vision examples, built from
   trunk sources with both FPC trunk and Bruto, now draw the same screens
   in 25 of the 26 scenarios compared (menus, dialogs, the file dialog,
@@ -180,6 +189,8 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   the Disassembly window's function headers) use the lower-case form.
 
 ### Fixed
+- `SetLength` on a string fills new characters with #0 (they were
+  spaces).
 - A cast of a UnicodeString variable to a short string type
   (`TWildStr(S)`) converted the string instead of reading its pointer
   as characters, so Free Vision's file dialog shows `../*.*` as FPC's
