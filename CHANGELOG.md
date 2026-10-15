@@ -7,6 +7,17 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **A `Classes` unit**: `TFPList`, `TList`, `TStrings`, `TStringList`
+  (sorting, duplicates, `CommaText`/`DelimitedText`, `Values[]`,
+  `LoadFromFile`/`SaveToFile`, `OnChange`, `OwnsObjects`), `TPersistent`,
+  and streams (`TStream`, `THandleStream`, `TFileStream`, `TMemoryStream`,
+  `TStringStream`), checked against FPC's output.
+- `for X in Obj do` over a class instance: through its `GetEnumerator`
+  (or the instance itself as the enumerator), freed afterwards.
+- SysUtils: `FileOpen`/`FileCreate`/`FileRead`/`FileWrite`/`FileSeek`/
+  `FileClose`, `DeleteFile`, `RenameFile`, `CompareStr`, `CompareText`,
+  `SameText`, `AnsiCompareText`, `QuotedStr`, `GetLastOSError`,
+  `SysErrorMessage`.
 - **Method pointers** (`procedure(...) of object`): they hold the method
   and its instance, as FPC's `TMethod`, so events work:
   `Button.OnClick := @Form.ButtonClick`, `FOnClick(Self)`,
@@ -230,6 +241,13 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   the Disassembly window's function headers) use the lower-case form.
 
 ### Fixed
+- `ReallocMem(P, 0)` frees the block and sets `P` to nil, as in FPC.
+- Calls through an abstract method pass `var` and untyped arguments by
+  reference.
+- `Read(...)` and `Write(...)` in an expression call the program's own
+  routine or method of that name (`N := Read(Buf, Count)` in a stream).
+- A C function declared under another Pascal name no longer hides the
+  built-in of the same name (SysUtils' `RenameFile` and `Rename`).
 - Records are laid out as in C and FPC: fields aligned, padding
   counted in `SizeOf`, and a variant part stores its tag only when the
   tag has a name, with the union aligned like its fields. Records passed

@@ -125,6 +125,23 @@ Unix terminal:
   `TTcpServer` (`Listen`, `Accept`), `TUdpSocket` and `THttpClient`
   (plain-HTTP `Get`, chunked bodies decoded, `Header`). Constructors
   `Fail` when they can't connect, so `if not C.Connect(...) then` works.
+- **`Classes`**: FPC's lists, string lists and streams. `TFPList` and
+  `TList` (pointer lists with `Sort`), `TStrings` / `TStringList`
+  (`Strings[]` by default, `Objects[]`, `IndexOf`, `Sort`, `CustomSort`,
+  `Sorted` with `Duplicates`, `CaseSensitive`, `OwnsObjects`, `Text`,
+  `CommaText`, `DelimitedText` with `Delimiter`, `QuoteChar` and
+  `StrictDelimiter`, `Names[]` / `Values[]` / `ValueFromIndex[]`,
+  `LoadFromFile` / `SaveToFile`, `OnChange`, `for S in List`),
+  `TPersistent.Assign`, and streams: `TStream` (`Read`, `Write`, `Seek`,
+  `Position`, `Size`, `ReadBuffer`, `WriteBuffer`, `CopyFrom`,
+  `ReadAnsiString`...), `THandleStream`, `TFileStream` (`fmCreate`,
+  `fmOpenRead`...), `TMemoryStream` and `TStringStream`. Errors raise
+  FPC's exceptions (`EListError`, `EStringListError`, `EFOpenError`...).
+- **`SysUtils`**: besides the string and file-name routines and the
+  exceptions: `FileOpen` / `FileCreate` / `FileRead` / `FileWrite` /
+  `FileSeek` / `FileClose`, `DeleteFile`, `RenameFile`, `CompareStr`,
+  `CompareText`, `SameText`, `AnsiCompareText`, `QuotedStr`,
+  `GetLastOSError`, `SysErrorMessage`.
 - **`fpwidestring`**, **`cwstring`**: empty, since conversions between
   UnicodeString and AnsiString are built in.
 
@@ -891,9 +908,12 @@ status.
 
 ## Known gaps versus Standard Pascal / FPC
 
-- No generics or interfaces. Turbo Pascal `object` types and Object
-  Pascal classes are supported (see Objects and Classes), and so are
-  units and the `uses` clause (see Units).
+- No generics, interfaces or dynamic arrays (`array of T`). Turbo
+  Pascal `object` types and Object Pascal classes are supported (see
+  Objects and Classes), and so are units and the `uses` clause (see
+  Units).
+- `Integer` is 64 bits wide (FPC's is 16 bits, or 32 in `{$mode
+  objfpc}`): `SizeOf(Integer)` and binary data written with it differ.
 - No `goto` to non-numeric labels (numeric only).
 - Conformant array parameters are limited; prefer typed arrays.
 
