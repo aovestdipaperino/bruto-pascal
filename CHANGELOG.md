@@ -196,6 +196,16 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   the Disassembly window's function headers) use the lower-case form.
 
 ### Fixed
+- `Dispose` releases the strings of the record it frees; a function's
+  record or array result hands its strings to the caller; `String(c)`
+  makes a counted string. Free Vision's demos now end with no leaks.
+- A field or element of a function's record result can be used directly
+  (`MakePerson(7).Name`).
+- Linux: `Dos.FindFirst` reads file types correctly on arm64 (the
+  `st_mode` offset was x86-64's), so Free Vision's file dialog works; the
+  System prelude has FPC's `LowerCase` for strings (Free Vision's
+  clipboard code uses it on Linux).
+- Windows: SysUtils' `DirectoryExists` and `Sleep` use the Windows API.
 - `New` zeroes the record it allocates, as FPC initializes its strings.
 - `Str`, `Format`, `HexStr`, `GetDir` and `ReadLn` no longer leak the C
   buffers they format into.
