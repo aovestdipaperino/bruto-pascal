@@ -168,6 +168,9 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   the Disassembly window's function headers) use the lower-case form.
 
 ### Fixed
+- Shift-selection and the clipboard work in Free Vision's editor:
+  `GetShiftState` reports the modifiers of the last key read (a terminal
+  sends them only with a key), where it always said none.
 - `Val` sets the error position (it was always 0), reads reals and `$`
   hex, and stores into fields and narrow integers without overwriting
   what follows them.
