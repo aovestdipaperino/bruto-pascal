@@ -7,6 +7,12 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Network access**: a `Sockets` unit (FPC's interface, macOS and
+  Linux), `NetDB.ResolveHostByName`, and `NetObjects`, Turbo Pascal
+  objects for TCP clients and servers, UDP and plain HTTP `GET`.
+- A constructor called as a value (`if not Conn.Connect(...) then`)
+  says whether it succeeded; a parameterless external function can be
+  called by name alone.
 - **Strings are freed.** AnsiStrings and UnicodeStrings are reference
   counted: storing one counts it, the one it replaces is released,
   routines release their string locals and value parameters, and the
@@ -196,6 +202,11 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   the Disassembly window's function headers) use the lower-case form.
 
 ### Fixed
+- Records are laid out as in C and FPC: fields aligned, padding
+  counted in `SizeOf`, and a variant part stores its tag only when the
+  tag has a name, with the union aligned like its fields. Records passed
+  to C (`sockaddr_in`) now match.
+- `write` of a value whose type is an alias (`ssize_t`) works.
 - `Dispose` releases the strings of the record it frees; a function's
   record or array result hands its strings to the caller; `String(c)`
   makes a counted string. Free Vision's demos now end with no leaks.

@@ -112,6 +112,19 @@ Unix terminal:
   `FindNext` / `FindClose`), `FSplit`, `FExpand`, `FSearch`, dates and
   times.
 - **`BrutoConsole`**: the terminal layer the three above share.
+- **`Sockets`**: FPC's socket unit for macOS and Linux: `fpSocket`,
+  `fpBind`, `fpListen`, `fpAccept`, `fpConnect`, `fpSend`, `fpRecv`,
+  `fpSendTo`, `fpRecvFrom`, socket options, `CloseSocket`, `SocketError`,
+  `htons`/`htonl`, `StrToNetAddr`/`NetAddrToStr`, and `TInetSockAddr`
+  with each system's layout. A write to a closed connection returns an
+  error instead of raising `SIGPIPE`.
+- **`NetDB`**: `ResolveHostByName` (through `getaddrinfo`, so
+  `/etc/hosts` and DNS).
+- **`NetObjects`**: networking as Turbo Pascal objects: `TTcpClient`
+  (`Connect` by host name, `SendString`, `ReadLine`, `ReadAll`),
+  `TTcpServer` (`Listen`, `Accept`), `TUdpSocket` and `THttpClient`
+  (plain-HTTP `Get`, chunked bodies decoded, `Header`). Constructors
+  `Fail` when they can't connect, so `if not C.Connect(...) then` works.
 - **`fpwidestring`**, **`cwstring`**: empty, since conversions between
   UnicodeString and AnsiString are built in.
 
