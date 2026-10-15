@@ -555,10 +555,64 @@ end.
   Where the program has a `TObject` of its own (Free Vision's Objects
   unit), the root class is still the one classes descend from, and its
   `ClassName` is still `TObject`.
-- Not yet: exceptions (`try`/`except`/`finally`, `raise`), `class var`,
-  interfaces, published RTTI and streaming, `AfterConstruction` and
-  `BeforeDestruction` being called, method pointers (`procedure of
-  object`) holding their instance.
+- Not yet: `class var`, interfaces, published RTTI and streaming,
+  `AfterConstruction` and `BeforeDestruction` being called, method
+  pointers (`procedure of object`) holding their instance.
+
+## Exceptions
+
+```pascal
+uses SysUtils;
+
+procedure Load(const Name: string);
+begin
+  if Name = '' then
+    raise EArgumentException.Create('no file name');
+  ...
+end;
+
+begin
+  try
+    Load(ParamStr(1));
+    WriteLn(StrToInt('12x'));
+  except
+    on E: EConvertError do WriteLn('not a number: ', E.Message);
+    on E: Exception do WriteLn(E.ClassName, ': ', E.Message);
+  end;
+end.
+```
+
+- `raise Obj` raises any class instance; `[at Address]` is accepted and
+  ignored. A bare `raise` in a handler raises the exception being handled
+  again.
+- `try ... except ... end`: the `on [Name:] Class do Statement` handlers
+  are tried in order, then `else`; without `on` handlers the statements
+  after `except` handle everything. An exception no handler matches goes
+  on to the enclosing `try`. A handled exception is freed when its
+  handler ends.
+- `try ... finally ... end`: the `finally` statements run however the
+  block is left, by an exception, `exit`, `break` or `continue`.
+- An exception nothing handles stops the program with exit code 217 and
+  FPC's report on stderr (`An unhandled exception occurred at $...:`,
+  then `EClass: message`).
+- A class's constructor that raises destroys the instance it was making
+  (its destructor runs) before the exception goes on.
+- Routines an exception leaves early release their string locals.
+- SysUtils has FPC's `Exception` (`Create`, `CreateFmt`, `CreateHelp`,
+  `Message`, `HelpContext`, `ToString`) and its usual descendants
+  (`EConvertError`, `EInvalidCast`, `EAbort`, `EDivByZero`,
+  `ERangeError`, `EIntOverflow`, `EAccessViolation`, `EInOutError`,
+  `EOutOfMemory`, `EArgumentException`, `ENotImplemented`...), `Abort`
+  and `ExceptObject`. With SysUtils, the runtime errors the compiler
+  checks for (a failed `as`, an abstract method call) become the
+  matching exceptions; `StrToInt` raises `EConvertError`. `RunError`
+  still stops the program, as in FPC.
+- Implementation: frames with `setjmp`/`longjmp`, as FPC uses on most
+  targets. A routine containing a `try` statement is compiled without
+  optimization.
+- Not yet: exceptions from hardware faults (`EAccessViolation` from a nil
+  pointer, `EDivByZero` from integer division), and `goto` out of a
+  `try` block (it skips the `finally` statements).
 
 ## Statements
 
@@ -835,7 +889,6 @@ status.
   Pascal classes are supported (see Objects and Classes), and so are
   units and the `uses` clause (see Units).
 - No `goto` to non-numeric labels (numeric only).
-- No `try / except / finally`, no exceptions.
 - Conformant array parameters are limited; prefer typed arrays.
 
 These limitations are tracked in the issues backlog and may relax in

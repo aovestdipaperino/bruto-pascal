@@ -7,6 +7,15 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Exceptions.** `try ... except` (with `on E: EClass do` handlers,
+  `else`, and bare `raise` to re-raise), `try ... finally` (also run on
+  `exit`, `break` and `continue`), and `raise`. An unhandled exception
+  stops the program with FPC's report and exit code 217. SysUtils gains
+  FPC's `Exception` hierarchy, `Abort` and `ExceptObject`; `StrToInt`
+  raises `EConvertError`, and compiler-checked runtime errors (a failed
+  `as`, an abstract call) become exceptions. A class constructor that
+  raises destroys its half-made instance; routines an exception leaves
+  release their string locals.
 - **Object Pascal classes.** `class` types with heap instances used
   through references, `TObject` as the root (`Create`, `Destroy`,
   `Free`, `ClassName`, `ClassType`, `ClassParent`, `InheritsFrom`...),
