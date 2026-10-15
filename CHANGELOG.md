@@ -7,6 +7,14 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **All of Free Vision's example programs run** (without `FV_UNICODE`):
+  `keytest`, `listdemo` (mouse double-click included), `filedlg` (the
+  file open dialog reading the directory), `demoedit`, `colorselonly`
+  and `demostatuses`. New for them: a `SysUtils` unit (`Format`,
+  `IntToStr`, `IntToHex`, `UpperCase`, `Trim`, `StrToInt`,
+  `FileExists`, `Sleep`...), a `cwstring` unit, a bare `inherited;`,
+  `New(PType, Init)` without parentheses, and `sizeof` of built-in types
+  in `{$IF}`.
 - **FPC's Free Vision demo, `testapp.pas`, runs** (built without
   `FV_UNICODE`): menus, the editor window, dialogs with radio buttons
   and check boxes, the ASCII chart, the timed message box and the
@@ -142,6 +150,11 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   the Disassembly window's function headers) use the lower-case form.
 
 ### Fixed
+- `Copy` with an index below 1 or a count past the end returns what FPC
+  does instead of reading outside the string.
+- A string variable that was never assigned compares as empty.
+- `Length` of a short string reads its length byte, and assigning one
+  character of a short string keeps its length.
 - `Str` into a short string, typed short-string constants at program
   level, and character arrays initialized from strings store the
   characters rather than a pointer.
