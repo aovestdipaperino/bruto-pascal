@@ -555,9 +555,15 @@ end.
   Where the program has a `TObject` of its own (Free Vision's Objects
   unit), the root class is still the one classes descend from, and its
   `ClassName` is still `TObject`.
+- Method pointers (`procedure(...) of object`, `function(...): T of
+  object`) hold a method and its instance, as FPC's `TMethod` (`Code`,
+  `Data`): `B.OnClick := @Form.ButtonClick` (or `@ButtonClick` inside
+  one of the form's methods, or without `@`), then `B.OnClick(Self)` or
+  `if Assigned(FOnClick) then FOnClick(Self)`. A virtual method is looked
+  up when the pointer is made. Methods of `object` types work too.
 - Not yet: `class var`, interfaces, published RTTI and streaming,
-  `AfterConstruction` and `BeforeDestruction` being called, method
-  pointers (`procedure of object`) holding their instance.
+  `AfterConstruction` and `BeforeDestruction` being called, `var`
+  parameters in procedural and method pointer types.
 
 ## Exceptions
 

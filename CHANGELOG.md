@@ -7,6 +7,11 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Method pointers** (`procedure(...) of object`): they hold the method
+  and its instance, as FPC's `TMethod`, so events work:
+  `Button.OnClick := @Form.ButtonClick`, `FOnClick(Self)`,
+  `Assigned(FOnClick)`. They can be fields, properties, variables and
+  parameters, and compare with `nil`.
 - **Exceptions.** `try ... except` (with `on E: EClass do` handlers,
   `else`, and bare `raise` to re-raise), `try ... finally` (also run on
   `exit`, `break` and `continue`), and `raise`. An unhandled exception
