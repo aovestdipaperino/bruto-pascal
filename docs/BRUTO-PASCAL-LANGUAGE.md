@@ -298,9 +298,13 @@ Subrange types of the form `lo..hi` (where both bounds are integer
 literals) and enumerated types `(A, B, C)` are also user-definable. An
 enumeration's values can be given (`(szSmall = 1, szLarge = 5, szHuge)`:
 `szHuge` is 6). `Write` writes an enumeration value by its name, left-
-justified in its width, as FPC does. An enumeration value takes 8 bytes
-(FPC's take 4, or as few as fit in Delphi mode), and a set 32 bytes (FPC
-uses 4 for a set of at most 32 elements).
+justified in its width, as FPC does. An enumeration value takes the
+bytes FPC gives it: 4 in FPC's own modes, as few as fit (1, 2 or 4) in
+Delphi and TP modes, at least `{$PACKENUM n}` (`{$Z1}`, `{$Z2}`, `{$Z4}`)
+where given. A `packed record` has no padding between its fields. A set
+takes 32 bytes (FPC uses 4 for a set of at most 32 elements). `for X in
+TColor` runs through an enumeration's values, `for X in S` through a
+set's members.
 
 ### AnsiString
 

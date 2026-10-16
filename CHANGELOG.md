@@ -7,6 +7,8 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- `{$PACKENUM}`/`{$Z1}`..`{$Z4}`; `packed record`; `for X in TEnum` and
+  `for X in SomeSet`.
 - **Component streaming** in FPC's binary format, byte for byte:
   `TStream.WriteComponent`/`ReadComponent`, `TWriter`/`TReader`,
   `ObjectBinaryToText`/`ObjectTextToBinary`, `RegisterClass(es)`,
@@ -60,6 +62,10 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   TStringList`) are usable as class names.
 
 ### Changed
+- An enumeration value takes FPC's size (4 bytes in FPC's modes, the
+  fewest that fit in Delphi and TP modes) rather than 8, so records with
+  enumeration fields have FPC's layout; `packed record`s are packed.
+- A variable or parameter hides an enumeration value of the same name.
 - A string literal's characters are the source's bytes, as in FPC: in a
   UTF-8 source, `'é'` is two bytes (it was one, in Latin-1).
 - Compiling runs on a thread with a large stack, so long expressions
