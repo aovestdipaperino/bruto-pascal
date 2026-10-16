@@ -7,6 +7,20 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Floating point exceptions as FPC raises them**: division by zero,
+  invalid operations and overflow are runtime errors 208, 207 and 205
+  (`EZeroDivide`, `EInvalidOp`, `EOverflow` with SysUtils), maskable
+  with Math's `SetExceptionMask`.
+- **Reals written exactly as FPC writes them**: FPC's `str_real` and
+  Grisu digit generation ported, so `Write`, `Str` and their `:w` and
+  `:w:d` forms give FPC's text digit for digit, `+Inf`/`Nan` included.
+- **`Single`** is a 32-bit float (4 bytes in records), as in FPC.
+- **The `Math` unit** (FPC's commonly used routines), `Pi`, `Int`,
+  `Frac`, and **`Random`/`Randomize`/`RandSeed`** giving FPC 3.2's
+  Mersenne Twister sequence.
+- **Initialized variables**: `var Count: Integer = 5;`.
+- **Unsigned `QWord` arithmetic**: `div`, `mod`, comparisons, `Write`,
+  `Str`, `IntToStr` and `UIntToStr` handle values above `High(Int64)`.
 - **Interfaces** (COM, FPC's default): interface types with GUIDs and
   properties, classes implementing them, reference counting through
   `_AddRef`/`_Release`, `IInterface`/`IUnknown`, `TInterfacedObject`,
@@ -23,6 +37,12 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   TStringList`) are usable as class names.
 
 ### Changed
+- A `goto` into or out of a `try` block is a compile-time error, as in
+  FPC (it used to skip the `finally` statements).
+- A program without a `uses` clause gets the System routines written in
+  Pascal too (`GetFPCHeapStatus`, `LowerCase`...); before, only programs
+  using a unit did.
+- `X <> Y` is true when either real is a NaN, as in FPC.
 - In `{$mode objfpc}` and `{$mode delphi}`, `Integer` is 32 bits wide and
   `MaxInt` is 2147483647, as in FPC (64 bits otherwise, as before).
   SysUtils, Classes and the network units are compiled in objfpc mode.

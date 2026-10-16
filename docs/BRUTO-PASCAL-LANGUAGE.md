@@ -138,6 +138,14 @@ Unix terminal:
   `ReadAnsiString`...), `THandleStream`, `TFileStream` (`fmCreate`,
   `fmOpenRead`...), `TMemoryStream` and `TStringStream`. Errors raise
   FPC's exceptions (`EListError`, `EStringListError`, `EFOpenError`...).
+- **`Math`**: FPC's commonly used routines: `Min`/`Max`, `InRange`,
+  `EnsureRange`, `Sign`, `CompareValue`, `IsNan`, `IsInfinite`,
+  `IsZero`, `SameValue`, `Floor`/`Ceil` (and the 64-bit ones), `RoundTo`,
+  `SimpleRoundTo`, `Power`, `IntPower`, `Log10`, `Log2`, `LogN`,
+  `LnXP1`, `Hypot`, the trigonometric and hyperbolic functions and their
+  inverses, angle conversions, `Sum`, `Mean`, `MinValue`/`MaxValue`,
+  `StdDev`, `Variance`, `RandomRange`, `RandG`, `DivMod`, `NaN` and
+  `Infinity`, and `GetExceptionMask`/`SetExceptionMask`.
 - **`SysUtils`**: besides the string and file-name routines and the
   exceptions: `FileOpen` / `FileCreate` / `FileRead` / `FileWrite` /
   `FileSeek` / `FileClose`, `DeleteFile`, `RenameFile`, `CompareStr`,
@@ -250,7 +258,8 @@ reserved words, as in Turbo Pascal: a variable may still be named
 | Type      | Width / range                                             |
 |-----------|-----------------------------------------------------------|
 | `integer` | 64-bit signed                                             |
-| `real`    | 64-bit IEEE-754 (`double`)                                |
+| `real`    | 64-bit IEEE-754 (`double`; also `Extended`, `Currency`, `Comp`) |
+| `Single`  | 32-bit IEEE-754: 4 bytes in records and arrays, widened to `real` in expressions |
 | `char`    | 8-bit                                                     |
 | `WideChar` | 16-bit, one UTF-16 code unit (`UnicodeChar` too)        |
 | `boolean` | `false` (0) / `true` (1)                                  |
@@ -276,9 +285,11 @@ records and arrays have the layout FPC gives them. In expressions
 they behave like `integer`: values are widened to 64 bits when read,
 and truncated to the variable's width when stored, so `Byte` arithmetic
 wraps (`255 + 1` stored in a `Byte` is `0`). A program can declare its
-own type with one of these names, which then takes precedence. `QWord`
-arithmetic is done as signed 64-bit, so values above `high(Int64)`
-compare and divide incorrectly.
+own type with one of these names, which then takes precedence. As in
+FPC, arithmetic between `QWord`s (or a `QWord` and another unsigned value
+or a non-negative literal) is unsigned: `div`, `mod`, comparisons,
+`Write`, `Str` and `IntToStr` treat values above `high(Int64)` as the
+large numbers they are.
 
 Subrange types of the form `lo..hi` (where both bounds are integer
 literals) and enumerated types `(A, B, C)` are also user-definable.
@@ -441,6 +452,10 @@ current routine's locals.
 All variables are zero-initialised at the start of the program (and
 each procedure call) — integers to `0`, reals to `0.0`, strings to
 `''`, sets to `[]`, pointers to `nil`.
+
+A variable can be given its first value where it is declared, as in FPC:
+`var Count: Integer = 5;`, `Primes: array[1..4] of Integer = (2, 3, 5,
+7);`. A routine's such locals get the value on every call.
 
 ## Procedures and functions
 
@@ -758,9 +773,10 @@ end.
   (`Runtime error 200 at $...`) goes to stderr and the program stops
   with that exit code. Range and overflow check failures raise
   `ERangeError` and `EIntOverflow` with SysUtils.
-- Not yet: `goto` out of a `try` block (it skips the `finally`
-  statements); a float division by zero gives an infinity rather than an
-  exception.
+- As in FPC, a `goto` into or out of a `try` block (or its `except` or
+  `finally` part) is a compile-time error.
+- Floating point errors raise `EZeroDivide`, `EInvalidOp` and
+  `EOverflow` (see Arithmetic / math).
 
 ## Generics
 
@@ -911,10 +927,21 @@ FPC.
 | `exp(x)`      | real → real                | `e^x`                       |
 | `ln(x)`       | real → real                | natural log                 |
 | `arctan(x)`   | real → real                |                             |
+| `int(r)` / `frac(r)` | real → real         | whole part / fraction       |
 | `trunc(r)`    | real → integer             | toward zero                 |
 | `round(r)`    | real → integer             | half-to-even                |
 | `odd(n)`      | integer → boolean          |                             |
 | `maxint`      | constant: `9_223_372_036_854_775_807` |                  |
+| `pi`          | real                       |                             |
+| `random(n)` / `random` | integer in `0..n-1` / real in `[0, 1)` | FPC 3.2's Mersenne Twister: a given `RandSeed` gives FPC's numbers; `randomize` seeds from the clock |
+
+A floating point division by zero, an invalid operation (`0/0`,
+`Sqrt(-1)`, `Ln(-1)`) and an overflow stop the program with FPC's
+runtime errors 208, 207 and 205, or raise `EZeroDivide`, `EInvalidOp`
+and `EOverflow` with SysUtils, unless the Math unit's
+`SetExceptionMask` masks them (underflow and inexact results are masked,
+as in FPC). Arithmetic on infinities and NaNs already there doesn't
+trap.
 
 ### Ordinals
 
@@ -1020,6 +1047,13 @@ writeln(r:10:4);       { real in width 10, 4 decimals }
 writeln(s:20);         { right-align string in width 20 }
 ```
 
+Reals come out exactly as FPC writes them (its `str_real`, digit for
+digit): unformatted, in scientific form with 17 significant digits and a
+3-digit exponent (` 1.5000000000000000E+000`), 10 digits and 2 for a
+`Single` (or a literal a Single holds exactly); `r:w` fits the mantissa
+to the width; `r:w:d` is fixed point with FPC's rounding. Infinities are
+`+Inf` and `-Inf`, NaN is `Nan`. `Str` formats the same way.
+
 ## Errors and runtime trapping
 
 When `{$R+}` is in effect, out-of-range array indices and subrange
@@ -1067,9 +1101,11 @@ status.
 
 ## Known gaps versus Standard Pascal / FPC
 
-- No interfaces. Turbo Pascal `object` types and Object Pascal classes are supported
-  (see Objects and Classes), and so are units and the `uses` clause (see
-  Units).
+- Turbo Pascal `object` types, Object Pascal classes and COM interfaces
+  are supported (see Objects, Classes and Interfaces), and so are units
+  and the `uses` clause (see Units).
+- The transcendental functions (`Sin`, `Exp`, `Ln`...) come from the C
+  library, so their last bit can differ from FPC's own routines.
 - `Integer` is 32 bits wide in `{$mode objfpc}` and `{$mode delphi}`, as
   in FPC (`MaxInt` follows), and 64 bits otherwise (FPC's `{$mode fpc}`
   and `{$mode tp}` make it 16). The FPC-derived units (SysUtils,
