@@ -7,6 +7,17 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Dynamic arrays** (`array of T`): `SetLength` (several dimensions
+  too), `Length`/`High`/`Low`, `Copy`, `Insert`, `Delete`, `[a, b]`
+  values, `for-in`; reference counted with their elements.
+  **Open array parameters** (`const A: array of T`, `var` too) taking
+  static arrays, dynamic arrays and `[a, b, c]`, and **`array of
+  const`** (`TVarRec`).
+- **SysUtils `Format` written after FPC's**: `array of const` arguments,
+  `%[index:][-][width][.prec]` with d, u, x, s, f, e, g, n, m and p, FPC's
+  float rounding and exponent style, `*` widths, and EConvertError for a
+  bad argument. `FloatToStr`, `FloatToStrF`.
+- Real literals with exponents (`1e20`, `1.5E-7`).
 - **TLS and HTTPS**, through FPC's own units: `ssockets` (`TInetSocket`,
   `TInetServer`), `sslsockets` and `opensslsockets` (TLS handlers, with
   certificate and host-name checking), `OpenSSL` (loaded at run time),
@@ -253,6 +264,8 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   the Disassembly window's function headers) use the lower-case form.
 
 ### Fixed
+- In a function nested in another function, `Result` is its own result,
+  not the outer one's.
 - A `PChar` stored into a string is copied, as FPC does; before, the
   string pointed at the C buffer (wrong once the buffer changed).
 - A string constant passed to an untyped parameter

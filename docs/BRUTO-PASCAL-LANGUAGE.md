@@ -376,6 +376,25 @@ Notes / restrictions:
   `function(x: real): real`. A variable of such a type holds `@Proc` or
   a routine name and is called like the routine.
 
+### Dynamic and open arrays
+
+`array of T` declares a dynamic array: indexed from 0, `nil` (length 0)
+until `SetLength(A, N)` gives it N zeroed elements (`SetLength(G, W, H)`
+for an array of arrays). `Length`, `High`, `Low`, `Copy(A, Start,
+Count)`, `Insert(Value, A, Index)`, `Delete(A, Index, Count)`, `A := [1,
+2, 3]` and `for X in A` work as in FPC. Assigning one dynamic array to
+another shares the elements (as in FPC, there is no copy on write);
+`SetLength` gives the variable its own copy. They are reference counted
+and freed with their elements, like strings.
+
+As a parameter's type, `array of T` is an open array: any array of T can
+be passed (a static array, a dynamic one, `[a, b, c]`), indexed from 0
+with `High(A)` its last index; a `var` open array changes the caller's
+elements. `array of const` takes values of any type as `TVarRec`s
+(`VType` is `vtInteger`, `vtInt64`, `vtAnsiString`, `vtChar`,
+`vtBoolean`, `vtExtended`, `vtPointer`, `vtObject`...), as SysUtils'
+`Format` does.
+
 ## Constants
 
 ```pascal
@@ -943,10 +962,9 @@ status.
 
 ## Known gaps versus Standard Pascal / FPC
 
-- No generics, interfaces or dynamic arrays (`array of T`). Turbo
-  Pascal `object` types and Object Pascal classes are supported (see
-  Objects and Classes), and so are units and the `uses` clause (see
-  Units).
+- No generics or interfaces. Turbo Pascal `object` types and Object
+  Pascal classes are supported (see Objects and Classes), and so are
+  units and the `uses` clause (see Units).
 - `Integer` is 64 bits wide (FPC's is 16 bits, or 32 in `{$mode
   objfpc}`): `SizeOf(Integer)` and binary data written with it differ.
 - No `goto` to non-numeric labels (numeric only).
