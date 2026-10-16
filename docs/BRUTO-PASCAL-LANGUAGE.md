@@ -613,9 +613,8 @@ end.
   `default` one is reached as `Obj[I]`, and `index N` passes N to a
   shared getter or setter. Inside the class's methods, and in a `with`
   on an instance, properties can be used by bare name.
-- Forward declarations (`TFoo = class;`), classes with no body
-  (`EFoo = class(TBase);`) and implemented interfaces in the heading
-  (accepted, not checked) are allowed. `published`, `strict private` and
+- Forward declarations (`TFoo = class;`) and classes with no body
+  (`EFoo = class(TBase);`) are allowed. `published`, `strict private` and
   so on are accepted but not enforced.
 - Classes and `object` types mix freely in one program: an object can
   hold a class reference and a class can hold a pointer to an object.
@@ -638,7 +637,69 @@ end.
   or through an instance.
 - As in FPC, `AfterConstruction` runs after a class's constructor made
   an instance, and `BeforeDestruction` before its destructor frees one.
-- Not yet: interfaces, published RTTI and streaming.
+- Not yet: published RTTI and streaming.
+
+## Interfaces
+
+COM interfaces, FPC's default kind: reference counted, with a GUID.
+
+```pascal
+type
+  IShape = interface
+    ['{A0000000-0000-0000-0000-000000000001}']
+    function Area: Double;
+    function GetName: string;
+    property Name: string read GetName;
+  end;
+
+  TSquare = class(TInterfacedObject, IShape)
+    FSide: Double;
+    constructor Create(ASide: Double);
+    function Area: Double;
+    function GetName: string;
+  end;
+...
+var
+  S: IShape;
+begin
+  S := TSquare.Create(2);       { freed when the last reference goes }
+  WriteLn(S.Name, ' ', S.Area:0:1);
+  if Supports(S, INamed, N) then ...
+end.
+```
+
+- An interface lists methods and properties (through its methods); it
+  descends from `IInterface` (alias `IUnknown`: `QueryInterface`,
+  `_AddRef`, `_Release`) or from the interface in parentheses. A class
+  lists the interfaces it implements after its parent (`class(TParent,
+  IFoo, IBar)`, or `class(IFoo)` with TObject as parent), and must have
+  a method of each name. Descendant classes implement them too, with
+  their overrides of virtual methods. Generic interfaces work
+  (`specialize IBox<Integer>` in the list).
+- `TInterfacedObject` counts references and destroys itself at zero;
+  `RefCount` reads the count. `TObject.GetInterface(IID, Ref)` finds an
+  interface by GUID; an interface's name used as a value is its `TGUID`
+  (`I.QueryInterface(IFoo, Ref)`).
+- Storing a reference counts it and releases the one replaced; locals,
+  value parameters and fields release theirs as strings do, and records,
+  arrays and dynamic arrays of interfaces are counted too. `const`
+  parameters aren't counted, as in FPC.
+- A class instance converts implicitly to an interface its class lists
+  (not to that interface's ancestors, as in FPC), and an interface to
+  its ancestors. `X as IFoo` and `X is IFoo` (X an instance or an
+  interface) look the interface up at run time (`as` stops with runtime
+  error 219 if it isn't there), `I as TFoo` gives the instance, and
+  `Supports(X, IFoo)` / `Supports(X, IFoo, Ref)` answer the question
+  (setting `Ref` or nil). `IFoo(X)` converts too, giving nil where the
+  class lacks IFoo. References compare (`I = J`, `I <> nil`,
+  `Assigned(I)`) by instance.
+- As FPC does, the reference a function returns (or `as` makes) is held
+  in a hidden temporary until a later statement reuses it or the routine
+  ends, so objects behind such temporaries are destroyed at the same
+  points as in FPC. Global interface variables aren't released at the
+  program's end.
+- Not yet: `{$interfaces corba}`, method resolution clauses
+  (`procedure IFoo.Bar = Baz`), `implements` delegation.
 
 ## Exceptions
 
@@ -810,10 +871,6 @@ end;
 { heap }
 new(p);   p^ := 42;   dispose(p);
 ```
-
-### Statement-level limits
-
-- **No `try` / `except`** error handling.
 
 ## Expressions
 

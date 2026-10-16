@@ -7,6 +7,13 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Interfaces** (COM, FPC's default): interface types with GUIDs and
+  properties, classes implementing them, reference counting through
+  `_AddRef`/`_Release`, `IInterface`/`IUnknown`, `TInterfacedObject`,
+  `TGUID`, `QueryInterface`/`GetInterface`, `as`, `is`, `Supports`,
+  `IFoo(Obj)` casts and generic interfaces. Temporaries live as long as
+  FPC's, so destruction order matches FPC's output. A class's VMT has one
+  more header word (its interface table).
 - **Generics**: generic classes, records, other types and routines in
   FPC's and Delphi's syntax, specialized by copying, with `Default(T)`; the `fgl`
   unit (`TFPGList`, `TFPGObjectList`, `TFPGMap`) and
