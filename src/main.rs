@@ -50,9 +50,19 @@ fn main() {
                 update::check_and_prompt(app);
             })),
             build_options: cfg.build.to_options(),
-            on_build_options_changed: Some(Box::new(move |opts| {
+            on_build_options_changed: Some(Box::new({
+                let config_path = config_path.clone();
+                move |opts| {
+                    let _ = config::Config::update(&config_path, |c| {
+                        c.build = config::BuildConfig::from(opts);
+                    });
+                }
+            })),
+            // A primary file that no longer exists is dropped.
+            primary_file: cfg.primary_file.clone().filter(|p| p.is_file()),
+            on_primary_file_changed: Some(Box::new(move |path| {
                 let _ = config::Config::update(&config_path, |c| {
-                    c.build = config::BuildConfig::from(opts);
+                    c.primary_file = path.map(std::path::Path::to_path_buf);
                 });
             })),
         };

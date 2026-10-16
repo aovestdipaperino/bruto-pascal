@@ -7,6 +7,9 @@ use serde::{Deserialize, Serialize};
 #[serde(default)]
 pub struct Config {
     pub show_about_dialog_on_start: bool,
+    /// The IDE's primary file (Build → Primary file…), if set.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub primary_file: Option<PathBuf>,
     pub build: BuildConfig,
 }
 
@@ -14,6 +17,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             show_about_dialog_on_start: true,
+            primary_file: None,
             build: BuildConfig::default(),
         }
     }
@@ -112,11 +116,26 @@ mod tests {
         };
         let cfg = Config {
             show_about_dialog_on_start: false,
+            primary_file: None,
             build: BuildConfig::from(&opts),
         };
         let text = toml::to_string_pretty(&cfg).unwrap();
         let back: Config = toml::from_str(&text).unwrap();
         assert_eq!(back.build.to_options(), opts);
+    }
+
+    #[test]
+    fn primary_file_round_trips_and_is_optional() {
+        let cfg = Config {
+            primary_file: Some(PathBuf::from("/src/my app/main.pas")),
+            ..Config::default()
+        };
+        let text = toml::to_string(&cfg).unwrap();
+        let back: Config = toml::from_str(&text).unwrap();
+        assert_eq!(back.primary_file, cfg.primary_file);
+        let none = toml::to_string(&Config::default()).unwrap();
+        assert!(!none.contains("primary_file"), "{none}");
+        assert_eq!(toml::from_str::<Config>(&none).unwrap().primary_file, None);
     }
 
     #[test]

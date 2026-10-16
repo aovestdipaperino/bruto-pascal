@@ -42,6 +42,10 @@ it, and see the demo's README for the `brutop -Fu ...` command.
 - Integrated lldb: step over (F8), step into (F7), continue (F5)
 - Variable watch panel (decodes set bitmasks into Pascal literal form)
 - Build (F9), Run (Ctrl+F9), Debug (F5)
+- A primary file, as in Turbo Pascal (Build › Primary file…): the
+  program Build, Run, Debug and Profile work on, whichever window you
+  are editing. Without one, a unit's window builds a program that uses
+  it (an open one, else one in the unit's folder)
 - Output panel for compiler + program console output
 
 ## Prerequisites

@@ -119,10 +119,13 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   TStringList`) are usable as class names.
 
 ### Fixed
-- **Profiling and building from a unit's window**: with a unit in the
-  focused window, Build, Run, Debug and Profile work on an open program
-  (one using the unit first) instead of failing with "expected
-  'program', found 'unit'"; with none open, the IDE says so.
+- **A primary file, as in Turbo Pascal and the FPC IDE** (Build ›
+  Primary file…, Clear primary file, kept in the config): Build, Run,
+  Debug and Profile work on it whichever window is focused, opening it
+  if needed. Without one, a unit's window no longer fails with
+  "expected 'program', found 'unit'": the IDE builds an open program
+  using the unit, else one in the unit's folder (opened), else says to
+  set a primary file.
 - **Profiles of programs with units**: a unit's routines and lines are
   shown with their file (`TopWords (writercore.pas)`, `line 318
   (writercore.pas)`) instead of as the program's lines, and the
