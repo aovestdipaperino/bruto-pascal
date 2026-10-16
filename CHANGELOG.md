@@ -7,6 +7,8 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Enumerations with explicit values (`(szSmall = 1, szLarge = 5)`);
+  `WriteStr`.
 - **Interface method resolution clauses** (`function IFoo.Bar = MyBar;`),
   **`implements` delegation** through interface- or class-typed
   properties, and **CORBA interfaces** (`{$interfaces corba}`), all
@@ -44,6 +46,9 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   TStringList`) are usable as class names.
 
 ### Changed
+- `Write` of an enumeration value writes its name (left-justified in a
+  width), as FPC does; `High`, `Low`, `Succ` and `Pred` of an enumeration
+  are of its type.
 - A `goto` into or out of a `try` block is a compile-time error, as in
   FPC (it used to skip the `finally` statements).
 - A program without a `uses` clause gets the System routines written in
