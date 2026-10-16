@@ -701,6 +701,40 @@ end.
   statements); a float division by zero gives an infinity rather than an
   exception.
 
+## Generics
+
+Generic classes, objects, records and other types, with FPC's syntax
+(`generic TStack<T> = class ... end;`, `specialize TStack<Integer>`) or
+Delphi's (`TStack<T> = class`, `TStack<Integer>`), in programs and units:
+
+```pascal
+type
+  generic TStack<T> = class
+  private
+    FItems: array of T;
+    FCount: Integer;
+  public
+    procedure Push(const Item: T);
+    function Pop: T;
+  end;
+  TIntStack = specialize TStack<Integer>;
+
+procedure TStack.Push(const Item: T);
+...
+var S: TIntStack;
+begin
+  S := TIntStack.Create;           { or specialize TStack<Integer>.Create }
+```
+
+Each specialization is a copy of the generic with its parameters replaced,
+made once per distinct list of arguments (so `TStack<Integer>` written
+twice is one type). A generic class can derive from a specialization
+(`class(specialize TBase<T>)`); `Default(T)` gives a parameter type's zero
+value; constraints (`<T: class>`) are accepted and not checked. The `fgl`
+unit has `TFPGList<T>`, `TFPGObjectList<T>` and `TFPGMap<TKey, TData>`, and
+`Generics.Collections` has `TList<T>`, `TObjectList<T>`, `TStack<T>`,
+`TQueue<T>`, `TDictionary<TKey, TValue>`, `TPair` and `TArray`.
+
 ## Statements
 
 ```pascal
@@ -972,9 +1006,10 @@ status.
 
 ## Known gaps versus Standard Pascal / FPC
 
-- No generics or interfaces. Turbo Pascal `object` types and Object
-  Pascal classes are supported (see Objects and Classes), and so are
-  units and the `uses` clause (see Units).
+- No interfaces, and no generic routines (generic types are supported).
+  Turbo Pascal `object` types and Object Pascal classes are supported
+  (see Objects and Classes), and so are units and the `uses` clause (see
+  Units).
 - `Integer` is 32 bits wide in `{$mode objfpc}` and `{$mode delphi}`, as
   in FPC (`MaxInt` follows), and 64 bits otherwise (FPC's `{$mode fpc}`
   and `{$mode tp}` make it 16). The FPC-derived units (SysUtils,

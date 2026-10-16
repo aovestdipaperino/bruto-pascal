@@ -6,6 +6,15 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Generics**: generic classes, records and other types in FPC's and
+  Delphi's syntax, specialized by copying, with `Default(T)`; the `fgl`
+  unit (`TFPGList`, `TFPGObjectList`, `TFPGMap`) and
+  `Generics.Collections` (`TList`, `TObjectList`, `TStack`, `TQueue`,
+  `TDictionary`), checked against FPC. Dotted unit names
+  (`Generics.Collections`); type aliases of classes (`TMyList =
+  TStringList`) are usable as class names.
+
 ### Changed
 - In `{$mode objfpc}` and `{$mode delphi}`, `Integer` is 32 bits wide and
   `MaxInt` is 2147483647, as in FPC (64 bits otherwise, as before).
