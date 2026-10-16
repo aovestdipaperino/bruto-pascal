@@ -726,6 +726,10 @@ begin
   S := TIntStack.Create;           { or specialize TStack<Integer>.Create }
 ```
 
+Generic routines too: `generic function Larger<T>(const A, B: T): T;`
+called as `specialize Larger<Integer>(3, 9)` (or `function Larger<T>` and
+`Larger<Integer>(3, 9)` in Delphi mode).
+
 Each specialization is a copy of the generic with its parameters replaced,
 made once per distinct list of arguments (so `TStack<Integer>` written
 twice is one type). A generic class can derive from a specialization
@@ -1006,8 +1010,7 @@ status.
 
 ## Known gaps versus Standard Pascal / FPC
 
-- No interfaces, and no generic routines (generic types are supported).
-  Turbo Pascal `object` types and Object Pascal classes are supported
+- No interfaces. Turbo Pascal `object` types and Object Pascal classes are supported
   (see Objects and Classes), and so are units and the `uses` clause (see
   Units).
 - `Integer` is 32 bits wide in `{$mode objfpc}` and `{$mode delphi}`, as
