@@ -7,6 +7,24 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Sets take FPC's sizes**: 4 bytes for elements up to 31 (else 32) in
+  FPC's modes, packed to the bytes their range covers in Delphi and TP
+  modes and with `{$PACKSET 1|2|4|8}`, laid out bit for bit as FPC does,
+  so records, untyped parameters and streams holding sets match FPC.
+- **`Currency`** as FPC has it on 64-bit ARM: an Int64 times 10000 in
+  memory, exact `+`/`-`/`*` (128-bit product), FPC's conversions and
+  `Write` format, `CurrToStr`/`StrToCurr`/`TryStrToCurr`, `ftCurr` RTTI
+  and varCurrency Variants (operators, conversions, streaming).
+- **Variant arrays of any number of dimensions** (`V[I, J]`, `V[I][J]`),
+  laid out as FPC lays them out, so `VarArrayRedim` behaves the same.
+- **Variants** and the `Variants` unit: FPC's `TVarData` layout, its
+  rules for the type a value takes, operators (arithmetic, `div`/`mod`,
+  logical, comparisons, Null and Empty), conversions to and from other
+  types (assignment, parameters, casts, conditions, `Write`), variant
+  arrays (`VarArrayCreate`, `VarArrayOf`, `V[I]`),
+  reference-counted strings and arrays inside them, `tkVariant` RTTI,
+  `GetPropValue`/`SetPropValue`/`Get`/`SetVariantProp`, and variant
+  properties streamed as FPC streams them. Checked against FPC.
 - **Collections**: `TCollection`, `TCollectionItem`, `TOwnedCollection`
   (ported from FPC), streamed and read back as FPC does;
   `TPersistent.GetOwner`/`GetNamePath`; SysUtils `CompareMem`.
@@ -358,6 +376,13 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   the Disassembly window's function headers) use the lower-case form.
 
 ### Fixed
+- Comparing class references (`C <> TFoo`) compared the bytes they point
+  at, so two classes of the same instance size were equal and
+  `InheritsFrom` could answer wrongly; they now compare as addresses.
+- `'c' in S` with a character written as a string literal no longer
+  crashes the compiler.
+- `Round` rounds halves to even (`Round(2.5)` is 2), as FPC does and as
+  documented.
 - In a function nested in another function, `Result` is its own result,
   not the outer one's.
 - A `PChar` stored into a string is copied, as FPC does; before, the

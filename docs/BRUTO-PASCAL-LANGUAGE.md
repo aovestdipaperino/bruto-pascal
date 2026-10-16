@@ -146,6 +146,14 @@ Unix terminal:
   inverses, angle conversions, `Sum`, `Mean`, `MinValue`/`MaxValue`,
   `StdDev`, `Variance`, `RandomRange`, `RandG`, `DivMod`, `NaN` and
   `Infinity`, and `GetExceptionMask`/`SetExceptionMask`.
+- **`Variants`**: FPC's Variant routines (see Variant below):
+  `VarType`, `VarTypeAsText`, `VarIsNull`/`VarIsEmpty`/`VarIsClear`/
+  `VarIsNumeric`/`VarIsStr`/`VarIsArray`..., `VarToStr`/`VarToStrDef`,
+  `VarToWideStr`, `VarAsType`, `VarCast`, `VarClear`, `VarCopy`,
+  `VarSameValue`, `VarCompareValue`, `VarInRange`, `Null`, `Unassigned`,
+  `VarArrayCreate`, `VarArrayOf`, `VarArrayLowBound`/`HighBound`/
+  `DimCount`, `VarArrayRedim`, `GetPropValue`/`SetPropValue`,
+  `Get`/`SetVariantProp`, and the `EVariant...` exceptions.
 - **`SysUtils`**: besides the string and file-name routines and the
   exceptions: `FileOpen` / `FileCreate` / `FileRead` / `FileWrite` /
   `FileSeek` / `FileClose`, `DeleteFile`, `RenameFile`, `CompareStr`,
@@ -261,8 +269,9 @@ reserved words, as in Turbo Pascal: a variable may still be named
 | Type      | Width / range                                             |
 |-----------|-----------------------------------------------------------|
 | `integer` | 64-bit signed                                             |
-| `real`    | 64-bit IEEE-754 (`double`; also `Extended`, `Currency`, `Comp`) |
+| `real`    | 64-bit IEEE-754 (`double`; also `Extended`, `Comp`) |
 | `Single`  | 32-bit IEEE-754: 4 bytes in records and arrays, widened to `real` in expressions |
+| `Currency` | FPC's fixed point: an Int64 holding the value times 10000 (see below) |
 | `char`    | 8-bit                                                     |
 | `WideChar` | 16-bit, one UTF-16 code unit (`UnicodeChar` too)        |
 | `boolean` | `false` (0) / `true` (1)                                  |
@@ -302,9 +311,23 @@ justified in its width, as FPC does. An enumeration value takes the
 bytes FPC gives it: 4 in FPC's own modes, as few as fit (1, 2 or 4) in
 Delphi and TP modes, at least `{$PACKENUM n}` (`{$Z1}`, `{$Z2}`, `{$Z4}`)
 where given. A `packed record` has no padding between its fields. A set
-takes 32 bytes (FPC uses 4 for a set of at most 32 elements). `for X in
-TColor` runs through an enumeration's values, `for X in S` through a
-set's members.
+takes the bytes FPC gives it: 4 when no element is above 31, else 32, in
+FPC's own modes; in Delphi and TP modes, or with `{$PACKSET 1}` (2, 4,
+8), only the bytes from its lowest element's to its highest's (rounded
+to the pack size, 3 becoming 4), so `set of 20..30` takes 2 bytes
+starting at element 16, as in FPC. `for X in TColor` runs through an
+enumeration's values, `for X in S` through a set's members.
+
+A `Currency` is laid out as FPC lays it out on 64-bit ARM: an Int64
+holding the value times 10000, so four decimal places are exact. In an
+expression it reads as a `real`, but `+`, `-` and `*` with a Currency
+operand give a Currency computed as FPC computes it: the other operand
+is made a Currency first (rounding halves to even), and a product keeps
+the 128-bit quotient by 10000, truncated. `/` gives a `real`; storing a
+`real` into a Currency rounds it. `Write` formats a Currency as FPC does
+(`2.500000000000000000E+00`, or `C:0:2`), `CurrToStr`/`StrToCurr` are in
+SysUtils, Currency properties have RTTI (`ftCurr`) and stream as floats,
+and a Currency in a Variant is a varCurrency.
 
 ### AnsiString
 
@@ -348,6 +371,39 @@ from a string constant. `UnicodeString(P)` of a raw pointer and
 
 Like AnsiStrings, UnicodeStrings are reference counted. A string is never
 changed in place: `S[i] := C` builds a new string.
+
+### Variant
+
+A `Variant` (`OleVariant` too) is FPC's: 16 bytes laid out as `TVarData`
+(declared in System with the `varXXX` type codes), holding a value of
+any simple type. Working with Variants needs the `Variants` unit, as in
+FPC. A value assigned to a Variant takes the type FPC gives it: a
+constant the smallest integer type that holds it (`42` is a ShortInt,
+`200` a Byte), a variable its own type, other integer expressions Int64,
+reals Double, `string` and `Char` String, `UnicodeString` and `WideChar`
+OleStr. The operators follow FPC's rules: `10 + 3` is an Integer (an
+Int64 when it overflows), `/` gives a Double, `'10' + 5` is 15.0, two
+strings concatenate, Null with anything is Null, `7 = '7'` is true, and
+converting `'abc'` to a number raises `EVariantError`. A Variant converts
+to the type it is assigned to, passed as or cast to (`I := V`,
+`string(V)`), rounding reals to even as FPC does; Null raises
+`EVariantTypeCastError` (`NullStrictConvert`). `Write` writes a Variant
+as `VarToStr` gives it, and a Variant can be a condition (`if V then`).
+
+Variant arrays have any number of dimensions:
+`VarArrayCreate([0, 9], varInteger)`, `VarArrayCreate([1, 3, 1, 3],
+varDouble)`, `VarArrayOf([1, 'two', 3.5])`, read and written as `V[I]`,
+`V[I, J]` or, for an array held in an element, `V[I][J]`; their elements
+are laid out as FPC's, so `VarArrayRedim` (of the last dimension) moves
+them as it does in FPC. Assigning a variant array copies it (the copy is
+made when a shared one is changed). Strings and arrays in Variants are
+reference counted. `VarClear` clears a string or array but, as in FPC,
+leaves a number's bytes, so a cleared Variant property is still
+streamed (as `nil`). Published Variant properties have RTTI
+(`tkVariant`) and are streamed as FPC streams them. Two FPC 3.2.2
+behaviors are not reproduced: on 64-bit ARM it streams a Currency held
+in a Variant with the wrong value, and whether a property assigned
+`Unassigned` is streamed depends on what its temporary held before.
 
 ## Type system
 
@@ -719,7 +775,8 @@ references at the end, and calls `Loaded`. `TObject.FieldAddress`,
 `MethodAddress` and `MethodName` read the published field and method
 tables. Collections (`TCollection`, `TCollectionItem`,
 `TOwnedCollection`, FPC's) stream as `Columns = < item ... end >`.
-Variants aren't streamed.
+Variant properties are written by their value's type, as FPC writes
+them, and read back (strings as OleStr, integers as Integer or Int64).
 
 ## Interfaces
 
