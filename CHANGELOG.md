@@ -376,6 +376,12 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   the Disassembly window's function headers) use the lower-case form.
 
 ### Fixed
+- Floating point traps on 64-bit ARM macOS are runtime error 216
+  (`EAccessViolation`), as FPC reports them there; `Trunc`/`Round` of a
+  real outside Int64, a Double overflowing the Single it is stored in,
+  `Sqr` overflowing and `Frac` of an infinity now trap as in FPC.
+- Type inference of operators was exponential in the nesting depth again
+  (a long `+` chain took minutes to compile).
 - Comparing class references (`C <> TFoo`) compared the bytes they point
   at, so two classes of the same instance size were equal and
   `InheritsFrom` could answer wrongly; they now compare as addresses.

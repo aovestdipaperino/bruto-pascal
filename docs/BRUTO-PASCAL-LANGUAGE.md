@@ -1068,12 +1068,16 @@ FPC.
 | `random(n)` / `random` | integer in `0..n-1` / real in `[0, 1)` | FPC 3.2's Mersenne Twister: a given `RandSeed` gives FPC's numbers; `randomize` seeds from the clock |
 
 A floating point division by zero, an invalid operation (`0/0`,
-`Sqrt(-1)`, `Ln(-1)`) and an overflow stop the program with FPC's
-runtime errors 208, 207 and 205, or raise `EZeroDivide`, `EInvalidOp`
-and `EOverflow` with SysUtils, unless the Math unit's
-`SetExceptionMask` masks them (underflow and inexact results are masked,
-as in FPC). Arithmetic on infinities and NaNs already there doesn't
-trap.
+`Sqrt(-1)`, `Ln(-1)`, `Frac` of an infinity, `Trunc`/`Round` of a value
+outside Int64) and an overflow (also a Double too large for the Single
+it is stored in) stop the program with FPC's runtime errors 208, 207
+and 205, or raise `EZeroDivide`, `EInvalidOp` and `EOverflow` with
+SysUtils, unless the Math unit's `SetExceptionMask` masks them
+(underflow and inexact results are masked, as in FPC; a masked
+`Trunc` saturates). On 64-bit ARM macOS, as FPC does there, every one of
+them is runtime error 216 instead, `EAccessViolation` ("Access
+violation") with SysUtils. Arithmetic on infinities and NaNs already
+there doesn't trap.
 
 ### Ordinals
 
