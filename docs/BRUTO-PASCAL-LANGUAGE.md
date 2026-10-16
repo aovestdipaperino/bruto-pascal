@@ -717,7 +717,9 @@ classes `RegisterClass` registered) and the root as their owner, sets
 the root's published field of each child's name, resolves component
 references at the end, and calls `Loaded`. `TObject.FieldAddress`,
 `MethodAddress` and `MethodName` read the published field and method
-tables. Collections and variants aren't streamed.
+tables. Collections (`TCollection`, `TCollectionItem`,
+`TOwnedCollection`, FPC's) stream as `Columns = < item ... end >`.
+Variants aren't streamed.
 
 ## Interfaces
 

@@ -7,6 +7,9 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Collections**: `TCollection`, `TCollectionItem`, `TOwnedCollection`
+  (ported from FPC), streamed and read back as FPC does;
+  `TPersistent.GetOwner`/`GetNamePath`; SysUtils `CompareMem`.
 - `{$PACKENUM}`/`{$Z1}`..`{$Z4}`; `packed record`; `for X in TEnum` and
   `for X in SomeSet`.
 - **Component streaming** in FPC's binary format, byte for byte:
