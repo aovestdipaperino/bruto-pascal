@@ -7,6 +7,8 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- `class var` fields; `AfterConstruction` and `BeforeDestruction` are
+  called as in FPC.
 - **Dynamic arrays** (`array of T`): `SetLength` (several dimensions
   too), `Length`/`High`/`Low`, `Copy`, `Insert`, `Delete`, `[a, b]`
   values, `for-in`; reference counted with their elements.

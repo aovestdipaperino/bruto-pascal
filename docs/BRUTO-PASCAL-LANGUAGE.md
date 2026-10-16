@@ -633,8 +633,12 @@ end.
   one of the form's methods, or without `@`), then `B.OnClick(Self)` or
   `if Assigned(FOnClick) then FOnClick(Self)`. A virtual method is looked
   up when the pointer is made. Methods of `object` types work too.
-- Not yet: `class var`, interfaces, published RTTI and streaming,
-  `AfterConstruction` and `BeforeDestruction` being called.
+- `class var` fields are one variable shared by the class and its
+  descendants, reached by bare name in their methods, as `TFoo.Count`
+  or through an instance.
+- As in FPC, `AfterConstruction` runs after a class's constructor made
+  an instance, and `BeforeDestruction` before its destructor frees one.
+- Not yet: interfaces, published RTTI and streaming.
 
 ## Exceptions
 
