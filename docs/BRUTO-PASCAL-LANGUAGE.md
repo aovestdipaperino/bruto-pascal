@@ -75,6 +75,10 @@ project/
 
 Run `brutop Demo.pas` from anywhere — units beside the source file
 are picked up automatically. A unit file may be named `.pas` or `.pp`.
+Other directories are searched after those with `-Fu<dir>` (or
+`-Fu <dir>`, `--unit-path <dir>`), as with FPC: `brutop
+-Fu third_party/fpc/packages/fv/src writer.pas` builds against Free
+Vision's sources.
 
 Each unit has its own scope. Two units may declare the same name; a
 reference finds the unit's own declaration first, then the one in the
@@ -152,8 +156,11 @@ Unix terminal:
   `VarToWideStr`, `VarAsType`, `VarCast`, `VarClear`, `VarCopy`,
   `VarSameValue`, `VarCompareValue`, `VarInRange`, `Null`, `Unassigned`,
   `VarArrayCreate`, `VarArrayOf`, `VarArrayLowBound`/`HighBound`/
-  `DimCount`, `VarArrayRedim`, `GetPropValue`/`SetPropValue`,
-  `Get`/`SetVariantProp`, and the `EVariant...` exceptions.
+  `DimCount`, `VarArrayRedim`, `VarArrayRef`, `VarArrayLock`/`Unlock`,
+  `VarFromDateTime`/`VarToDateTime`, `GetPropValue`/`SetPropValue`,
+  `Get`/`SetVariantProp`, custom variant types (`TCustomVariantType`,
+  `TInvokeableVariantType`, `FindCustomVariantType`), and the
+  `EVariant...` exceptions.
 - **`SysUtils`**: besides the string and file-name routines (among them
   `ChangeFileExt`, `ExtractFileName`/`Path`/`Dir`/`Ext`,
   `Include`/`ExcludeTrailingPathDelimiter`, `TryStrToInt`/`Int64`,
@@ -161,7 +168,20 @@ Unix terminal:
   exceptions: `FileOpen` / `FileCreate` / `FileRead` / `FileWrite` /
   `FileSeek` / `FileClose`, `DeleteFile`, `RenameFile`, `CompareStr`,
   `CompareText`, `SameText`, `AnsiCompareText`, `QuotedStr`,
-  `GetLastOSError`, `SysErrorMessage`.
+  `GetLastOSError`, `SysErrorMessage`; dates and times as FPC has them
+  (`TDateTime`, `Now`, `Date`, `Time`, `EncodeDate`/`DecodeDate`,
+  `EncodeTime`/`DecodeTime`, `DayOfWeek`, `IncMonth`, `IsLeapYear`,
+  `DateToStr`, `TimeToStr`, `DateTimeToStr`, `StrToDate`/`Time`/
+  `DateTime` and their `Try`/`Def` forms, `FormatDateTime`,
+  `DateTimeToTimeStamp`, `SystemTimeToDateTime`, `FileDateToDateTime`...),
+  formatted with FPC's defaults on Unix (`DefaultFormatSettings`:
+  `29-2-24 13:05:07`, not the system locale's); and the `PChar` routines
+  (`StrLen`, `StrCopy`, `StrLCopy`, `StrPCopy`, `StrCat`, `StrComp`,
+  `StrIComp`, `StrLComp`, `StrScan`, `StrRScan`, `StrPos`, `StrUpper`,
+  `StrLower`, `StrNew`, `StrDispose`...) and `CharInSet`.
+- **`DateUtils`**, **`SysConst`**: FPC 3.2.2's own (`YearOf`,
+  `DaysBetween`, `IncDay`, `StartOfTheMonth`, `IsToday`, `ISO8601`
+  week numbers...).
 - **`OpenSSL`**: FPC's names for the OpenSSL calls TLS needs
   (`InitSSLInterface`, `SslCtxNew`, `SslNew`, `SslConnect`, `SslRead`,
   ...). libssl and libcrypto (OpenSSL 1.1 or 3) are loaded at run time:
@@ -407,6 +427,24 @@ streamed (as `nil`). Published Variant properties have RTTI
 behaviors are not reproduced: on 64-bit ARM it streams a Currency held
 in a Variant with the wrong value, and whether a property assigned
 `Unassigned` is streamed depends on what its temporary held before.
+
+A `TDateTime` (or `TDate`, `TTime`) goes into a Variant as a date
+(`varDate`), as in FPC: `VarToStr` gives `DateTimeToStr` (or
+`TimeToStr` for a time alone), adding a number to a date gives a date,
+subtracting two dates gives a Double, and a string assigned to a
+`TDateTime` is read with `StrToDateTime`. `VarArrayLock` gives a pointer
+to a variant array's elements (written back by `VarArrayUnlock`), and
+`VarArrayRef` a reference (`varByRef`) to an array.
+
+Custom variant types are FPC's: a descendant of `TCustomVariantType`
+(created once, which registers a type code from `$010F` up) handles
+copying, clearing, casts, operators and comparisons of the Variants
+holding its code. A descendant of `TInvokeableVariantType` also gets
+late-bound calls: `V.Name` asks its `GetProperty`, then `DoFunction`;
+`V.Name(Args)` its `DoFunction` (a statement: `DoProcedure`, then
+`DoFunction`); `V.Name := X` its `SetProperty`. The name is passed as
+written, and an unhandled one raises `EVariantDispatchError`. Late
+binding through OLE automation (`IDispatch`) isn't available.
 
 ## Type system
 
@@ -750,8 +788,9 @@ WriteLn(GetStrProp(Widget, 'Caption'), GetOrdProp(Widget, 'Width'));
 Published properties may read and write fields, static or virtual
 methods (with `index N` too); `default` and `stored` are recorded.
 Properties are listed inherited first, in declaration order
-(`GetPropList` with kinds sorts them by name). Variants
-(`GetPropValue`) aren't available.
+(`GetPropList` with kinds sorts them by name). With the `Variants`
+unit, `GetPropValue` and `SetPropValue` read and write any of them as a
+Variant.
 
 ## Streaming components
 
@@ -782,7 +821,8 @@ references at the end, and calls `Loaded`. `TObject.FieldAddress`,
 tables. Collections (`TCollection`, `TCollectionItem`,
 `TOwnedCollection`, FPC's) stream as `Columns = < item ... end >`.
 Variant properties are written by their value's type, as FPC writes
-them, and read back (strings as OleStr, integers as Integer or Int64).
+them, and read back (strings as OleStr, integers as Integer or Int64,
+dates as `vaDate`).
 
 ## Interfaces
 
@@ -952,7 +992,21 @@ each argument named with the unit (or program) declaring it. A generic class can
 value; constraints (`<T: class>`) are accepted and not checked. The `fgl`
 unit has `TFPGList<T>`, `TFPGObjectList<T>` and `TFPGMap<TKey, TData>`, and
 `Generics.Collections` has `TList<T>`, `TObjectList<T>`, `TStack<T>`,
-`TQueue<T>`, `TDictionary<TKey, TValue>`, `TPair` and `TArray`.
+`TQueue<T>`, `TDictionary<TKey, TValue>`, `TPair`, `TArray` and
+`TArrayHelper<T>` (`Sort`, `BinarySearch`).
+
+`Generics.Defaults` has FPC's comparers: `IComparer<T>` with
+`TComparer<T>.Default` and `TComparer<T>.Construct` (from a function or
+a method), and `IEqualityComparer<T>` with `TEqualityComparer<T>.Default`
+and `.Construct(Equals, Hasher)`. A `TList<T>` takes a comparer when
+created or sorted (`Sort(Comparer)`, `BinarySearch(Item, Index,
+Comparer)`), and sorts with FPC's algorithm, so equal items end in the
+same order; a `TDictionary` takes an equality comparer (a
+case-insensitive dictionary, say). Without one, values compare as the
+default comparers do: numbers, characters, enumerations, strings and
+Variants by value, pointers and classes by address, records and static
+arrays by their bytes, as FPC's binary comparer does. So a `TList` of
+records works, and records can be dictionary keys.
 
 ## Statements
 

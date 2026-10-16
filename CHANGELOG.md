@@ -7,6 +7,36 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Dates and times in SysUtils**, from FPC 3.2.2: `TDateTime`, `Now`,
+  `Date`, `Time`, `EncodeDate`/`DecodeDate`, `EncodeTime`/`DecodeTime`,
+  `IncMonth`, `DateToStr`/`TimeToStr`/`DateTimeToStr`, `StrToDate`/
+  `Time`/`DateTime` (with `Try` and `Def` forms), `FormatDateTime`,
+  time stamps, `TSystemTime`, `FileDateToDateTime` and
+  `DefaultFormatSettings` with FPC's Unix defaults; the `PChar` routines
+  (`StrLen`, `StrCopy`, `StrCat`, `StrComp`, `StrPos`, `StrNew`...) and
+  `CharInSet`; FPC's `DateUtils` and `SysConst` units. Checked against
+  FPC.
+- **Date Variants** (`varDate`): a `TDateTime` goes into a Variant as a
+  date, with FPC's arithmetic, comparisons, conversions (`VarToStr`,
+  strings to dates) and streaming (`vaDate`, also `TWriter.WriteDate`/
+  `TReader.ReadDate`). `VarFromDateTime`, `VarToDateTime`,
+  `VarArrayLock`/`VarArrayUnlock`, `VarArrayRef` and by-reference
+  Variants.
+- **Custom variant types**: `TCustomVariantType` and
+  `TInvokeableVariantType` as in FPC (copy, clear, casts, operators,
+  comparisons), with **late binding**: `V.Name`, `V.Name(Args)` and
+  `V.Name := X` call the type's `GetProperty`, `DoFunction`,
+  `DoProcedure` and `SetProperty`, with the name as written.
+- **`Generics.Defaults`**: `IComparer<T>`, `TComparer<T>.Default` /
+  `Construct`, `IEqualityComparer<T>`, `TEqualityComparer<T>.Default` /
+  `Construct`. `TList<T>` takes comparers (`Create(Comparer)`,
+  `Sort(Comparer)`, `BinarySearch`) and sorts and searches with FPC's
+  algorithms; `TDictionary` takes an equality comparer; FPC's
+  `TArrayHelper<T>`. Records can be list items and dictionary keys
+  (compared by their bytes, as FPC's default comparer does).
+- `-Fu<dir>` (`--unit-path`) adds a directory to the unit search path.
+  Free Vision is no longer copied anywhere: FPC's sources are an
+  optional submodule (`third_party/fpc`), fetched only on request.
 - **Bruto Writer** (`examples/writer`): a Free Vision word processor
   that tours the language, with a command-line check that matches FPC's
   output and files byte for byte.
@@ -116,6 +146,14 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   SysUtils, Classes and the network units are compiled in objfpc mode.
   A routine passed as a procedural value whose parameters differ only in
   integer or real widths is called through an adapter.
+- `PInteger` points to a 32-bit `Integer` in objfpc and Delphi modes, as
+  in FPC.
+- A generic's specializations made inside its methods are made after it,
+  so a class there can descend from it; an interface method is
+  implemented by the overload with its parameters (a class's
+  `Equals(A, B)` beside TObject's `Equals(Obj)`); `@Routine` and
+  `@Obj.Method` pick the overload taking a plain or a method procedural
+  type; arrays pick open-array overloads of their element type.
 
 ### Added
 - **Runtime errors as FPC reports them**: an integer division by zero is

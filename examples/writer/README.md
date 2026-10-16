@@ -102,19 +102,19 @@ Errors are exceptions: a rate that isn't a number raises SysUtils'
 
 ## Building it
 
-Free Vision isn't part of Bruto Pascal; it comes from FPC's sources.
-Put `packages/fv/src` from a checkout of
-[FPC's source](https://gitlab.com/freepascal.org/fpc/source) (the main
-branch) in a folder together with `packages/rtl-extra/src/inc/objects.pp`,
-then build from that folder (Bruto looks for units beside the program,
-then in the working directory):
+Free Vision isn't part of Bruto Pascal; it comes from
+[FPC's sources](https://gitlab.com/freepascal.org/fpc/source) (the main
+branch), which this repository has as an optional submodule in
+`third_party/fpc`. A plain or recursive clone leaves it empty; fetch it
+(a shallow checkout) when you want to build the demo, then point `-Fu`
+at Free Vision and at `objects.pp`:
 
 ```sh
-cp -R fpc-source/packages/fv/src/. fv/
-cp fpc-source/packages/rtl-extra/src/inc/objects.pp fv/
-cd fv
-brutop -o writer /path/to/examples/writer/writer.pas
-./writer /path/to/examples/writer/lighthouse.wri
+git submodule update --init --checkout -- third_party/fpc
+brutop -Fu third_party/fpc/packages/fv/src \
+       -Fu third_party/fpc/packages/rtl-extra/src/inc \
+       -o writer examples/writer/writer.pas
+./writer examples/writer/lighthouse.wri
 ```
 
 `lighthouse.wri` is a sample document. Without an argument the program

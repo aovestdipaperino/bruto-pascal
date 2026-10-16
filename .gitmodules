@@ -10,3 +10,8 @@
 [submodule "bruto-lang"]
 	path = bruto-lang
 	url = https://github.com/aovestdipaperino/bruto-lang.git
+[submodule "third_party/fpc"]
+	path = third_party/fpc
+	url = https://gitlab.com/freepascal.org/fpc/source.git
+	update = none
+	shallow = true

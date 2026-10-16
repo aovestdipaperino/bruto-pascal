@@ -71,6 +71,7 @@ fn main() {
     let mut source_file = None;
     let mut output_file = None;
     let mut build_options = bruto_lang::language::BuildOptions::default();
+    let mut unit_dirs: Vec<std::path::PathBuf> = Vec::new();
 
     let mut i = 1;
     while i < args.len() {
@@ -105,6 +106,18 @@ fn main() {
                 print_usage();
                 return;
             }
+            // `-Fu<dir>` (as FPC), `-Fu <dir>` or `--unit-path <dir>`.
+            "-Fu" | "--unit-path" => {
+                i += 1;
+                match args.get(i) {
+                    Some(dir) => unit_dirs.push(dir.into()),
+                    None => {
+                        eprintln!("error: -Fu requires a directory");
+                        process::exit(1);
+                    }
+                }
+            }
+            arg if arg.starts_with("-Fu") => unit_dirs.push(arg["-Fu".len()..].into()),
             arg if arg.starts_with('-') => {
                 eprintln!("error: unknown option '{arg}'");
                 print_usage();
@@ -136,6 +149,7 @@ fn main() {
         output_file.as_deref(),
         run_after,
         build_options,
+        &unit_dirs,
     );
     process::exit(code);
 }
@@ -145,6 +159,7 @@ fn compile_and_run(
     output_file: Option<&str>,
     run_after: bool,
     build_options: bruto_lang::language::BuildOptions,
+    unit_dirs: &[std::path::PathBuf],
 ) -> i32 {
     let source_path = Path::new(source_file);
     if !source_path.exists() {
@@ -177,7 +192,7 @@ fn compile_and_run(
     };
 
     // Units and `{$I}` include files are looked up in the source file's
-    // directory, then the working directory.
+    // directory, then the working directory, then the `-Fu` directories.
     let mut search_dirs: Vec<std::path::PathBuf> = Vec::new();
     if let Some(dir) = source_path.parent() {
         if !dir.as_os_str().is_empty() {
@@ -187,6 +202,12 @@ fn compile_and_run(
     if let Ok(cwd) = std::env::current_dir() {
         if !search_dirs.iter().any(|d| d == &cwd) {
             search_dirs.push(cwd);
+        }
+    }
+    // Then the `-Fu` directories, in order.
+    for dir in unit_dirs {
+        if !search_dirs.iter().any(|d| d == dir) {
+            search_dirs.push(dir.clone());
         }
     }
 
@@ -274,5 +295,7 @@ fn print_usage() {
     eprintln!("  --debug         Debug build with DWARF info, unoptimized (default)");
     eprintln!("  --retail        Optimized build without debug info");
     eprintln!("  --optimize <g>  Retail optimization goal: size, both (default), speed");
+    eprintln!("  -Fu<dir>        Also look for units (and include files) in <dir>");
+    eprintln!("                  (repeatable; also -Fu <dir> or --unit-path <dir>)");
     eprintln!("  -h, --help      Show this help");
 }

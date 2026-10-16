@@ -30,6 +30,9 @@ with document logic that uses classes, interfaces, generics, Variants,
 Currency, run-time type information and component streaming. Its
 command-line twin, `writercheck.pas`, prints the same output and writes
 the same files with Bruto Pascal as with FPC 3.2.2.
+Free Vision comes from FPC's sources, an optional submodule: run
+`git submodule update --init --checkout -- third_party/fpc` to fetch
+it, and see the demo's README for the `brutop -Fu ...` command.
 
 ## Features
 
