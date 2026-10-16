@@ -691,9 +691,15 @@ end.
 - Implementation: frames with `setjmp`/`longjmp`, as FPC uses on most
   targets. A routine containing a `try` statement is compiled without
   optimization.
-- Not yet: exceptions from hardware faults (`EAccessViolation` from a nil
-  pointer, `EDivByZero` from integer division), and `goto` out of a
-  `try` block (it skips the `finally` statements).
+- An integer division by zero is runtime error 200 and a memory access
+  fault (a nil pointer...) runtime error 216: with SysUtils they raise
+  `EDivByZero` and `EAccessViolation`; without, FPC's report
+  (`Runtime error 200 at $...`) goes to stderr and the program stops
+  with that exit code. Range and overflow check failures raise
+  `ERangeError` and `EIntOverflow` with SysUtils.
+- Not yet: `goto` out of a `try` block (it skips the `finally`
+  statements); a float division by zero gives an infinity rather than an
+  exception.
 
 ## Statements
 

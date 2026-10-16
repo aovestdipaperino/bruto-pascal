@@ -7,6 +7,11 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Runtime errors as FPC reports them**: an integer division by zero is
+  runtime error 200 and a nil-pointer access 216 (`EDivByZero` and
+  `EAccessViolation` with SysUtils); range and overflow check failures
+  raise `ERangeError`/`EIntOverflow` with SysUtils. Without SysUtils, the
+  report is FPC's (`Runtime error 200 at $...`, exit code 200).
 - `class var` fields; `AfterConstruction` and `BeforeDestruction` are
   called as in FPC.
 - **Dynamic arrays** (`array of T`): `SetLength` (several dimensions
