@@ -118,6 +118,16 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   (`Generics.Collections`); type aliases of classes (`TMyList =
   TStringList`) are usable as class names.
 
+### Fixed
+- **Profiling and building from a unit's window**: with a unit in the
+  focused window, Build, Run, Debug and Profile work on an open program
+  (one using the unit first) instead of failing with "expected
+  'program', found 'unit'"; with none open, the IDE says so.
+- **Profiles of programs with units**: a unit's routines and lines are
+  shown with their file (`TopWords (writercore.pas)`, `line 318
+  (writercore.pas)`) instead of as the program's lines, and the
+  editor's heat column only colours the program's own lines.
+
 ### Changed
 - An enumeration value takes FPC's size (4 bytes in FPC's modes, the
   fewest that fit in Delphi and TP modes) rather than 8, so records with
