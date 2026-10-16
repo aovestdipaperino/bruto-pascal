@@ -7,6 +7,13 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Component streaming** in FPC's binary format, byte for byte:
+  `TStream.WriteComponent`/`ReadComponent`, `TWriter`/`TReader`,
+  `ObjectBinaryToText`/`ObjectTextToBinary`, `RegisterClass(es)`,
+  `FindClass`/`GetClass`, published field and method tables
+  (`FieldAddress`, `MethodAddress`, `MethodName`), `TComponent.Loaded`,
+  `GetChildren`, `ComponentState`. Checked against FPC.
+- SysUtils `StrToInt64`, `StrToFloat`, `StrToFloatDef`, `TryStrToFloat`.
 - **Run-time type information and the `TypInfo` unit**: `TypeInfo(T)`,
   `ClassInfo`, published properties (`published` sections, `{$M+}` and
   `TPersistent` descendants' default sections), `GetPropList`,
@@ -53,6 +60,15 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   TStringList`) are usable as class names.
 
 ### Changed
+- A string literal's characters are the source's bytes, as in FPC: in a
+  UTF-8 source, `'é'` is two bytes (it was one, in Latin-1).
+- Compiling runs on a thread with a large stack, so long expressions
+  (`'a' + LineEnding + ...`) compile wherever the build is started from;
+  inferring the type of a long `+` chain no longer takes exponential
+  time.
+- `Include`/`Exclude` take any set place (a field too); `Dispose`'s
+  argument gets the class rewrite; an event can be called through a
+  chain (`Form.Button.OnClick(...)`).
 - `Write` of an enumeration value writes its name (left-justified in a
   width), as FPC does; `High`, `Low`, `Succ` and `Pred` of an enumeration
   are of its type.

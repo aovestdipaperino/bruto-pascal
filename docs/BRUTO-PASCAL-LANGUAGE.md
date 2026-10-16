@@ -193,7 +193,10 @@ units an interface uses must not lead back to it.
 - **Characters by code**: `#65` or `#$41` is `'A'`; `^M` is `#13`
   (control characters, `^A` = `#1`). Quoted strings and codes written
   next to each other form one string: `'line'#13#10`, `^M^J`.
-  Strings are byte strings: `#129` is the single byte 129.
+  Strings are byte strings: `#129` is the single byte 129, and a
+  literal's characters are the source's bytes, as in FPC: in a UTF-8
+  source `'é'` is two bytes (a source that isn't UTF-8 is read byte by
+  byte).
 - **Comments**: `{ … }`, `(* … *)`, and `// …` to end of line. Brace
   comments nest, as in FPC: `{ outer { inner } still outer }`.
 - **Compiler directives**: inside a brace comment starting with `$`,
@@ -660,7 +663,7 @@ end.
 - `published` properties carry run-time type information, as do the
   ones in the default section of a class compiled with `{$M+}` or
   descending from one (`TPersistent`); see Run-time type information.
-- Not yet: streaming components.
+- Components stream as FPC's do (see Streaming components).
 
 ## Run-time type information
 
@@ -683,6 +686,34 @@ methods (with `index N` too); `default` and `stored` are recorded.
 Properties are listed inherited first, in declaration order
 (`GetPropList` with kinds sorts them by name). Variants
 (`GetPropValue`) aren't available.
+
+## Streaming components
+
+The `Classes` unit writes and reads components in FPC's binary format
+(`TPF0`), byte for byte the same as FPC's, and converts it to and from
+the text form (`.lfm`/`.dfm` style):
+
+```pascal
+RegisterClasses([TForm1, TButton]);
+Stream.WriteComponent(Form);          { published properties, children }
+Stream.Position := 0;
+ObjectBinaryToText(Stream, Text);     { object Form1: TForm1 ... end }
+Form := TForm1.Create(nil);
+Stream.ReadComponent(Form);           { or ReadComponent(nil): a new one }
+```
+
+As in FPC, a property is written unless it equals its `default` (or,
+without one, unless a string or float is empty or zero) or `stored` says
+not; object properties that aren't components are written as their own
+properties (`Font.Size = 12`), components by name (`Buddy = Side`), and
+events by the name of the root's published method (`OnClick =
+OkClick`). Children are the components `GetChildren` gives (none, for a
+plain `TComponent`). Reading creates children with `FindClass` (the
+classes `RegisterClass` registered) and the root as their owner, sets
+the root's published field of each child's name, resolves component
+references at the end, and calls `Loaded`. `TObject.FieldAddress`,
+`MethodAddress` and `MethodName` read the published field and method
+tables. Collections and variants aren't streamed.
 
 ## Interfaces
 
