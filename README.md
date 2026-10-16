@@ -22,6 +22,15 @@ and [bruto-pascal-lang/README.md](bruto-pascal-lang/README.md) for the feature
 list. [LANGUAGE-TODO.md](LANGUAGE-TODO.md) tracks what's still missing
 (units, OO, exceptions).
 
+## A demo
+
+[examples/writer](examples/writer) is Bruto Writer, a small word
+processor in Free Vision: menus, an editor, dialogs and file dialogs,
+with document logic that uses classes, interfaces, generics, Variants,
+Currency, run-time type information and component streaming. Its
+command-line twin, `writercheck.pas`, prints the same output and writes
+the same files with Bruto Pascal as with FPC 3.2.2.
+
 ## Features
 
 - Syntax-highlighted editor for Pascal

@@ -154,7 +154,10 @@ Unix terminal:
   `VarArrayCreate`, `VarArrayOf`, `VarArrayLowBound`/`HighBound`/
   `DimCount`, `VarArrayRedim`, `GetPropValue`/`SetPropValue`,
   `Get`/`SetVariantProp`, and the `EVariant...` exceptions.
-- **`SysUtils`**: besides the string and file-name routines and the
+- **`SysUtils`**: besides the string and file-name routines (among them
+  `ChangeFileExt`, `ExtractFileName`/`Path`/`Dir`/`Ext`,
+  `Include`/`ExcludeTrailingPathDelimiter`, `TryStrToInt`/`Int64`,
+  `CurrToStr`/`StrToCurr`) and the
   exceptions: `FileOpen` / `FileCreate` / `FileRead` / `FileWrite` /
   `FileSeek` / `FileClose`, `DeleteFile`, `RenameFile`, `CompareStr`,
   `CompareText`, `SameText`, `AnsiCompareText`, `QuotedStr`,
@@ -703,7 +706,10 @@ end.
   hold a class reference and a class can hold a pointer to an object.
   Where the program has a `TObject` of its own (Free Vision's Objects
   unit), the root class is still the one classes descend from, and its
-  `ClassName` is still `TObject`.
+  `ClassName` is still `TObject`. As in FPC, a unit's `TObject` hides the
+  root class only where that unit is used (the last unit in `uses`
+  wins), so SysUtils, Classes and the program's own class units can sit
+  beside Free Vision in one program.
 - Methods can be overloaded (`function Get(const URL: string): string;
   overload;` beside `procedure Get(const URL: string; Stream: TStream);
   overload;`); the call's arguments pick one. In a class, a method with
@@ -1065,7 +1071,7 @@ FPC.
 | `odd(n)`      | integer → boolean          |                             |
 | `maxint`      | constant: `9_223_372_036_854_775_807` |                  |
 | `pi`          | real                       |                             |
-| `random(n)` / `random` | integer in `0..n-1` / real in `[0, 1)` | FPC 3.2's Mersenne Twister: a given `RandSeed` gives FPC's numbers; `randomize` seeds from the clock |
+| `random(n)` / `random` | integer in `0..n-1` / real in `[0, 1)` | FPC 3.2's Mersenne Twister: a given `RandSeed` gives FPC's numbers, for LongInt and Int64 arguments alike (an Int64 one, such as `Length(A)`, draws as FPC's Int64 overload does); `randomize` seeds from the clock |
 
 A floating point division by zero, an invalid operation (`0/0`,
 `Sqrt(-1)`, `Ln(-1)`, `Frac` of an infinity, `Trunc`/`Round` of a value

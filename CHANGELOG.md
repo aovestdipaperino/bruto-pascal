@@ -7,6 +7,12 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Bruto Writer** (`examples/writer`): a Free Vision word processor
+  that tours the language, with a command-line check that matches FPC's
+  output and files byte for byte.
+- SysUtils `ChangeFileExt`, `ExtractFileName`/`Path`/`Dir`/`Ext`,
+  `Include`/`ExcludeTrailingPathDelimiter`, `TryStrToInt`,
+  `TryStrToInt64` (FPC's semantics, dot-files and wrapping included).
 - **Sets take FPC's sizes**: 4 bytes for elements up to 31 (else 32) in
   FPC's modes, packed to the bytes their range covers in Delphi and TP
   modes and with `{$PACKSET 1|2|4|8}`, laid out bit for bit as FPC does,
@@ -376,6 +382,16 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   the Disassembly window's function headers) use the lower-case form.
 
 ### Fixed
+- A unit's own `TObject` (Free Vision's Objects) no longer replaces the
+  root class in units that don't use it, so SysUtils and Classes work
+  beside Free Vision.
+- An assignment through a pointer to an `object` (`P^.Value := ...`)
+  now reads class properties on its right side.
+- `Length` of a static array (or typed-constant array) is its element
+  count.
+- `Random` with an Int64 argument draws as FPC's Int64 overload does;
+  with a negative LongInt it gives FPC's numbers.
+- `Val` into an integer reports overflow at the offending digit, as FPC.
 - Floating point traps on 64-bit ARM macOS are runtime error 216
   (`EAccessViolation`), as FPC reports them there; `Trunc`/`Round` of a
   real outside Int64, a Double overflowing the Single it is stored in,
