@@ -126,6 +126,9 @@ the project adheres to [Semantic Versioning](https://semver.org/).
   "expected 'program', found 'unit'": the IDE builds an open program
   using the unit, else one in the unit's folder (opened), else says to
   set a primary file.
+- **Compile (Alt-F9)**, as in Turbo Pascal: checks the focused window's
+  text (unsaved changes too) without linking or running it, a unit on
+  its own, whatever the primary file; errors mark their line.
 - **Profiles of programs with units**: a unit's routines and lines are
   shown with their file (`TopWords (writercore.pas)`, `line 318
   (writercore.pas)`) instead of as the program's lines, and the
