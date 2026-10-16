@@ -7,6 +7,13 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Run-time type information and the `TypInfo` unit**: `TypeInfo(T)`,
+  `ClassInfo`, published properties (`published` sections, `{$M+}` and
+  `TPersistent` descendants' default sections), `GetPropList`,
+  `GetPropInfo`, `Get`/`Set` `Ord`/`Enum`/`Set`/`Str`/`Float`/`Int64`/
+  `Object`/`Method` `Prop`, `IsStoredProp`, `GetEnumName`/`GetEnumValue`,
+  `SetToString`/`StringToSet`; `TComponent`'s `Name` and `Tag` are
+  published. Checked against FPC. Set ↔ integer casts (`Integer(S)`).
 - Enumerations with explicit values (`(szSmall = 1, szLarge = 5)`);
   `WriteStr`.
 - **Interface method resolution clauses** (`function IFoo.Bar = MyBar;`),

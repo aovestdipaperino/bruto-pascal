@@ -657,7 +657,32 @@ end.
   or through an instance.
 - As in FPC, `AfterConstruction` runs after a class's constructor made
   an instance, and `BeforeDestruction` before its destructor frees one.
-- Not yet: published RTTI and streaming.
+- `published` properties carry run-time type information, as do the
+  ones in the default section of a class compiled with `{$M+}` or
+  descending from one (`TPersistent`); see Run-time type information.
+- Not yet: streaming components.
+
+## Run-time type information
+
+`TypeInfo(T)` gives a type's information (a `PTypeInfo`) and
+`Obj.ClassInfo` a class's; the records (`TTypeInfo`, `TTypeData`,
+`TPropInfo`, `TTypeKind`...) have FPC's names and fields, laid out
+Bruto's way. The `TypInfo` unit reads them as FPC's does:
+
+```pascal
+uses TypInfo;
+...
+WriteLn(GetEnumName(TypeInfo(TColor), Ord(clBlue)));     { clBlue }
+N := GetPropList(Widget, List);                          { published props }
+SetEnumProp(Widget, 'Shape', 'shTriangle');
+WriteLn(GetStrProp(Widget, 'Caption'), GetOrdProp(Widget, 'Width'));
+```
+
+Published properties may read and write fields, static or virtual
+methods (with `index N` too); `default` and `stored` are recorded.
+Properties are listed inherited first, in declaration order
+(`GetPropList` with kinds sorts them by name). Variants
+(`GetPropValue`) aren't available.
 
 ## Interfaces
 
