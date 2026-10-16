@@ -713,8 +713,15 @@ end.
   ends, so objects behind such temporaries are destroyed at the same
   points as in FPC. Global interface variables aren't released at the
   program's end.
-- Not yet: `{$interfaces corba}`, method resolution clauses
-  (`procedure IFoo.Bar = Baz`), `implements` delegation.
+- Method resolution clauses name the method implementing an interface's
+  method when the names differ: `function IReader.Name = ReaderName;`.
+- A property can implement an interface for the class (`property Inner:
+  IWriter read FInner implements IWriter;`): the class's IWriter is what
+  the property gives, an interface or an instance of a class
+  implementing it (whose count then decides its lifetime, as in FPC).
+- `{$interfaces corba}` makes the interfaces declared after it CORBA
+  ones: not counted, not descending from IInterface, and their GUID may
+  be any string (`['IShape']`).
 
 ## Exceptions
 
@@ -809,7 +816,8 @@ called as `specialize Larger<Integer>(3, 9)` (or `function Larger<T>` and
 
 Each specialization is a copy of the generic with its parameters replaced,
 made once per distinct list of arguments (so `TStack<Integer>` written
-twice is one type). A generic class can derive from a specialization
+twice is one type). Its `ClassName` is FPC's: `TStack<System.LongInt>`,
+each argument named with the unit (or program) declaring it. A generic class can derive from a specialization
 (`class(specialize TBase<T>)`); `Default(T)` gives a parameter type's zero
 value; constraints (`<T: class>`) are accepted and not checked. The `fgl`
 unit has `TFPGList<T>`, `TFPGObjectList<T>` and `TFPGMap<TKey, TData>`, and

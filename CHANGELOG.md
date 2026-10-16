@@ -7,6 +7,13 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Interface method resolution clauses** (`function IFoo.Bar = MyBar;`),
+  **`implements` delegation** through interface- or class-typed
+  properties, and **CORBA interfaces** (`{$interfaces corba}`), all
+  checked against FPC.
+- A specialization's `ClassName` is FPC's (`TBox<System.LongInt>`).
+- A statement can start with a parenthesized expression:
+  `(Obj as IFoo).Run;`.
 - **Floating point exceptions as FPC raises them**: division by zero,
   invalid operations and overflow are runtime errors 208, 207 and 205
   (`EZeroDivide`, `EInvalidOp`, `EOverflow` with SysUtils), maskable
