@@ -6,6 +6,13 @@ the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- In `{$mode objfpc}` and `{$mode delphi}`, `Integer` is 32 bits wide and
+  `MaxInt` is 2147483647, as in FPC (64 bits otherwise, as before).
+  SysUtils, Classes and the network units are compiled in objfpc mode.
+  A routine passed as a procedural value whose parameters differ only in
+  integer or real widths is called through an adapter.
+
 ### Added
 - **Runtime errors as FPC reports them**: an integer division by zero is
   runtime error 200 and a nil-pointer access 216 (`EDivByZero` and

@@ -975,8 +975,12 @@ status.
 - No generics or interfaces. Turbo Pascal `object` types and Object
   Pascal classes are supported (see Objects and Classes), and so are
   units and the `uses` clause (see Units).
-- `Integer` is 64 bits wide (FPC's is 16 bits, or 32 in `{$mode
-  objfpc}`): `SizeOf(Integer)` and binary data written with it differ.
+- `Integer` is 32 bits wide in `{$mode objfpc}` and `{$mode delphi}`, as
+  in FPC (`MaxInt` follows), and 64 bits otherwise (FPC's `{$mode fpc}`
+  and `{$mode tp}` make it 16). The FPC-derived units (SysUtils,
+  Classes, the socket and HTTP units) are compiled in objfpc mode, as in
+  FPC; a routine with 64-bit Integer parameters passed as a callback to
+  them (`List.CustomSort(@MyCompare)`) is adapted automatically.
 - No `goto` to non-numeric labels (numeric only).
 - Conformant array parameters are limited; prefer typed arrays.
 
